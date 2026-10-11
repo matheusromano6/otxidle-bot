@@ -266,36 +266,67 @@ class Engine:
             info["done"] = info.get("done", 0) + 1
             active = None
         info["creature"] = info["hunt"] = None
+        level = acc.state.level or 1
+        others = self._other_tasks(acc)
         if active:
             info["creature"] = active.creature
-            info["hunt"] = T.hunt_for(self.hunts, active.creature, acc.state.level or 1)
+            info["hunt"] = self._active_hunt(active.creature, level, others)
             if not info["hunt"]:
                 self._warn_once(("nohunt", acc.name, active.creature),
-                                f"{acc.name}: task {active.creature} sem caça possível no level {acc.state.level} - abandone ou troque")
+                                f"{acc.name}: task {active.creature} sem caça possível no level {level} - abandone ou troque")
             return
         if info.get("done", 0) >= tcfg["per_day"]:
             self.log(f"{acc.name}: terminou as {tcfg['per_day']} tasks do dia")
             return
-        others = [i.get("hunt") for k, i in self.memory.tasks_today(task_day(self.cfg)).items() if k != acc.name.casefold()]
         rerolls = 0
         difficulty = tcfg["difficulty"]
         if board.difficulty.casefold() != difficulty.casefold() and board.tokens > 0:
             board = acc.reroll(difficulty)
         while True:
-            pick = T.choose_card(board.cards, acc.state.level or 1, self.hunts, tcfg, others)
-            if pick:
-                card, hunt = pick
+            pick = T.choose_card(board.cards, level, self.hunts, tcfg, others)
+            can_reroll = board.tokens > 0 and rerolls < tcfg.get("max_rerolls", 2)
+            # nenhuma carta junta com outra conta: rerola tentando juntar (cada task devolve 1 token)
+            if pick and (pick[2] or not others or not can_reroll):
+                card, hunt, together = pick
                 acc.select_task(card.creature)
                 info.update(creature=card.creature, hunt=hunt, stuck=False)
-                self.log(f"{acc.name}: task {card.creature} ({card.need} abates, {card.xp} XP) em {hunt}")
+                self.log(f"{acc.name}: task {card.creature} ({card.need} abates, {card.xp} XP) em {hunt}"
+                         + (" - junto com outra conta" if together else " - sozinho"))
                 return
-            if board.tokens > 0 and rerolls < tcfg.get("max_rerolls", 2):
+            if can_reroll:
                 rerolls += 1
                 board = acc.reroll(difficulty)
                 continue
             info["stuck"] = True
             self.log(f"{acc.name}: nenhuma task boa e sem reroll - fica livre pelo resto do dia")
             return
+
+    def _other_tasks(self, acc):
+        """[(caça, level)] das tasks em andamento das OUTRAS contas abertas."""
+        day = self.memory.tasks_today(task_day(self.cfg))
+        out = []
+        for other in self.accounts:
+            key = (other.name or "").casefold()
+            if not key or key == acc.name.casefold():
+                continue
+            level = other.state.level or 1
+            hunt = (day.get(key) or {}).get("hunt")
+            if not hunt and other.state.task and not (day.get(key) or {}).get("checked"):
+                hunt = T.hunt_for(self.hunts, other.state.task[0], level)   # ainda nao lida: usa o rastreador
+            if hunt:
+                out.append((hunt, level))
+        return out
+
+    def _active_hunt(self, creature, level, others):
+        """Caça de uma task ja em andamento: a de outra conta (ate group_level_over acima), senao a recomendada pro
+        level; se a task foi escolhida na mao e e' mais dificil, aceita a mais facil que o jogo libera."""
+        over = self.cfg["tasks"].get("group_level_over", 5)
+        for hunt, other_level in others:
+            if T.levels_ok([level, other_level]) and any(
+                    h["name"].casefold() == hunt.casefold() for h in T.hunt_options(self.hunts, creature, level, over)):
+                return hunt
+        hard = T.hunt_options(self.hunts, creature, level, over=99)
+        return T.hunt_for(self.hunts, creature, level) or (min(hard, key=lambda h: h.get("rec_level") or 1)["name"] if hard else None)
 
     # ------------------------------------------------------------- treino
     def _train(self, acc):

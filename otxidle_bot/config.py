@@ -39,7 +39,9 @@ DEFAULTS = {
         "difficulty": "Adepto",
         "helpers": True,
         "min_xp_per_kill": 0,             # ignora cartas que pagam menos XP por abate (ex.: ratos)
-        "max_rerolls": 2,                 # rerolls seguidos procurando carta boa (cada um gasta 1 token)
+        "max_rerolls": 2,                 # rerolls seguidos procurando carta boa/que junte (cada um gasta 1 token)
+        # caça da task: sozinho so' com level recomendado <= level; junto com outra conta na mesma caça ate +5
+        "group_level_over": 5,
         "reset_hour": 0,                  # hora em que o dia das tasks vira
         "solo_hunts": {},                 # nome (minusculas) -> caça solo; vazio = a melhor pro level (hunts.json)
     },

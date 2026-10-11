@@ -294,8 +294,10 @@ class EngineV1Test(unittest.TestCase):
 class TasksLogicTest(unittest.TestCase):
     def test_hunt_for_level(self):
         self.assertEqual(T.hunt_for(HUNTS, "Orc", 10), "Orc Camp")
-        self.assertIsNone(T.hunt_for(HUNTS, "Swampling", 11))                 # min 12
-        self.assertEqual(T.hunt_for(HUNTS, "Swampling", 12), "Marsh Stalkers")
+        self.assertIsNone(T.hunt_for(HUNTS, "Swampling", 13))                 # sozinho: recomendado 15 > 13
+        self.assertEqual(T.hunt_for(HUNTS, "Swampling", 15), "Marsh Stalkers")
+        self.assertEqual(T.hunt_for(HUNTS, "Swampling", 12, over=5), "Marsh Stalkers")   # junto: ate +5
+        self.assertIsNone(T.hunt_for(HUNTS, "Swampling", 11, over=5))         # level minimo 12 do jogo
         self.assertEqual(T.solo_hunt(HUNTS, 13), "Folda Icefields")
         self.assertTrue(T.levels_ok([12, 8]))
         self.assertFalse(T.levels_ok([13, 8]))
@@ -303,9 +305,14 @@ class TasksLogicTest(unittest.TestCase):
     def test_choose_card_prefers_shared_hunt_then_xp(self):
         cards = [T.Card("Orc", 0, 183, 1601, 7), T.Card("Swampling", 0, 178, 2804, 7), T.Card("Troll", 0, 90, 900, 7)]
         cfg = config.DEFAULTS["tasks"]
-        self.assertEqual(T.choose_card(cards, 13, HUNTS, cfg)[0].creature, "Swampling")      # mais XP/abate
-        self.assertEqual(T.choose_card(cards, 13, HUNTS, cfg, ["Orc Camp"])[0].creature, "Orc")  # junta com outra conta
-        self.assertEqual(T.choose_card(cards, 10, HUNTS, cfg)[0].creature, "Troll")          # Swampling fora do level
+        pick = T.choose_card(cards, 13, HUNTS, cfg)
+        self.assertEqual((pick[0].creature, pick[2]), ("Troll", False))       # sozinho: Swampling (rec 15) fica de fora
+        pick = T.choose_card(cards, 13, HUNTS, cfg, [("Marsh Stalkers", 12)])
+        self.assertEqual((pick[0].creature, pick[1], pick[2]), ("Swampling", "Marsh Stalkers", True))   # junto: ate +5
+        pick = T.choose_card(cards, 13, HUNTS, cfg, [("Orc Camp", 11)])
+        self.assertEqual((pick[0].creature, pick[2]), ("Orc", True))          # junta mesmo pagando menos
+        pick = T.choose_card(cards, 13, HUNTS, cfg, [("Marsh Stalkers", 8)])
+        self.assertEqual((pick[0].creature, pick[2]), ("Troll", False))       # 8 fora dos 2/3 de 13: nao junta
         self.assertIsNone(T.choose_card(cards, 10, HUNTS, dict(cfg, min_xp_per_kill=20)))
 
     def test_parse_board_and_tracker(self):
@@ -318,6 +325,7 @@ class TasksLogicTest(unittest.TestCase):
         self.assertEqual((b.active.creature, b.active.status, b.cards[0].xp), ("Orc", "complete", 1601))
         self.assertEqual(T.parse_tracker("Rastreador de Tasks | RASTREADOR DE TASKS\nOrc Warrior · 7 pts\n12/118"), ("Orc Warrior", 12, 118))
         self.assertIsNone(T.parse_tracker("RASTREADOR DE BESTIARY\nTroll\n0/50"))
+        self.assertEqual(T.parse_tracker("Rastreador de Tasks | RASTREADOR DE TASKS\nOrc · 7 pts\nready"), ("Orc", 1, 1))
 
     def test_plan_groups_by_task_hunt_and_helpers(self):
         cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": [], "hunt": "Folda Icefields"})
@@ -352,6 +360,16 @@ class EngineTasksTest(unittest.TestCase):
         self.assertEqual(acc.actions[:4], ["board", "complete:Orc", "reroll:Adepto", "select:Orc Warrior"])
         day = eng.memory.tasks_today(eng.snapshot and __import__("otxidle_bot.engine", fromlist=["task_day"]).task_day(eng.cfg))
         self.assertEqual((day["kina"]["done"], day["kina"]["hunt"]), (1, "Orc Camp"))
+
+    def test_rerolls_to_join_another_account(self):
+        w = World()
+        kina = FakeAccount(w, "Kina", level=13, hunt="Orc Camp", board=board("Orc", 183, 183))
+        FakeAccount(w, "Pally", level=11, hunt="Orc Camp", board=board("Orc Warrior", 5, 118))
+        w.parties["Kina"] = ["Pally"]
+        eng = engine_for(w, make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": [], "hunt": ""}))
+        eng.tick()
+        # cartas da entrega (Rat/Troll/Cave Rat) nao juntam com o Pally -> rerola -> Orc Warrior no Orc Camp
+        self.assertEqual(kina.actions[:4], ["board", "complete:Orc", "reroll:Adepto", "select:Orc Warrior"])
 
     def test_new_task_elsewhere_regroups(self):
         w = World()

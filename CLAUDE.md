@@ -50,6 +50,10 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - VALIDADO ao vivo: membro "Finalizar Hunt" -> so' ele volta e SAI da party (party de 2 se desfaz; lider segue caçando).
   Convite pelo NOME (`.pt-add` input + `.pt-send` Convidar, com party criada por "Criar party") funciona SEM amizade.
   v2 rodando: leu os 4 quadros, plano = Kina+Pally+Sorc (Orc Camp) e Druid solo (Spider Nest), ciclo de capacidade ok.
+- Rastreador com task CHEIA mostra "ready" no lugar de "N/N" (`.ht-num`) -> parse_tracker devolve (criatura, 1, 1).
+- Regras do usuario (11/10): caça da task SOZINHO so' com level recomendado <= level; JUNTO com outra conta (2/3 de level)
+  aceita ate +5 (`tasks.group_level_over`). Nenhuma carta junta e ha outras contas em task -> REROLA (ate max_rerolls)
+  tentando juntar; senao pega a de mais XP/abate sozinho. Contagem do dia comeca do zero quando o bot liga.
 - Ainda NAO visto ao vivo com o bot: entrega automatica + reroll + reagrupar; fase de party; virada do dia; "COLETAR DIÁRIO".
 - memory.json: `tasks` {day, accounts{nome: done, creature, hunt, stuck, checked, tracker_tried}}, `training` [nomes].
 

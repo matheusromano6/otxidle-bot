@@ -26,17 +26,19 @@ def load_hunts(path=None):
         return json.load(file)
 
 
-def hunt_for(hunts, creature, level):
-    """Melhor caça com a criatura que a conta aguenta: a de maior level recomendado <= level; senao a mais facil
-    permitida (level minimo). None se nenhuma aceita esse level."""
-    options = [h for h in hunts if creature.casefold() in (c.casefold() for c in h["creatures"])
-               and (h.get("min_level") or 1) <= level]
+def hunt_options(hunts, creature, level, over=0):
+    """Caças com a criatura que o jogo libera (level minimo) e com level recomendado <= level + over."""
+    return [h for h in hunts if creature.casefold() in (c.casefold() for c in h["creatures"])
+            and (h.get("min_level") or 1) <= level and (h.get("rec_level") or 1) <= level + over]
+
+
+def hunt_for(hunts, creature, level, over=0):
+    """Melhor caça com a criatura: a de maior level recomendado <= level + over. None se nenhuma serve.
+    Regra do usuario: sozinho over=0 (recomendado <= level); com outra conta na mesma caça ate group_level_over (5)."""
+    options = hunt_options(hunts, creature, level, over)
     if not options:
         return None
-    easy = [h for h in options if (h.get("rec_level") or 1) <= level]
-    if easy:
-        return max(easy, key=lambda h: h.get("rec_level") or 1)["name"]
-    return min(options, key=lambda h: h.get("rec_level") or 1)["name"]
+    return max(options, key=lambda h: h.get("rec_level") or 1)["name"]
 
 
 def solo_hunt(hunts, level):
@@ -107,28 +109,39 @@ def parse_board(raw):
 
 
 def parse_tracker(text):
-    """'RASTREADOR DE TASKS | Orc · 7 pts | 3/183' -> ('Orc', 3, 183); sem task -> None."""
-    m = re.search(r"([A-Za-z][\w' -]+?)\s*·\s*\d+\s*pts.*?([\d.,]+)\s*/\s*([\d.,]+)", text or "", re.S)
+    """'RASTREADOR DE TASKS | Orc · 7 pts | 3/183' -> ('Orc', 3, 183). Task cheia o jogo mostra 'ready' no lugar dos
+    numeros (confirmado ao vivo) -> ('Orc', 1, 1). Sem task -> None."""
+    m = re.search(r"([A-Za-z][\w' -]+?)\s*·\s*\d+\s*pts\W*(ready|([\d.,]+)\s*/\s*([\d.,]+))", text or "", re.S | re.I)
     if not m:
         return None
-    return m.group(1).strip(), _num(m.group(2)), _num(m.group(3))
+    if m.group(2).casefold() == "ready":
+        return m.group(1).strip(), 1, 1
+    return m.group(1).strip(), _num(m.group(3)), _num(m.group(4))
 
 
-def choose_card(cards, level, hunts, cfg, other_hunts=()):
-    """Carta a pegar (ou None = rerolar/ficar sem). So' cartas com caça possivel pro level e XP/abate >= minimo.
-    Preferencia: caça onde outra conta ja esta fazendo task (party) > mais XP por abate."""
+def choose_card(cards, level, hunts, cfg, others=()):
+    """Carta a pegar: (card, caça, junta) ou None. 'others' = [(caça, level)] das tasks das OUTRAS contas.
+    - junta: a caça da carta e' a de outra conta com level compativel (2/3) -> aceita caça ate group_level_over acima;
+    - sozinho: so' caça com recomendado <= level.
+    Preferencia: junta > mais XP por abate. Cartas abaixo de min_xp_per_kill ficam de fora."""
     min_xpk = cfg.get("min_xp_per_kill", 0)
-    others = {h.casefold() for h in other_hunts if h}
+    over = cfg.get("group_level_over", 5)
     best, best_key = None, None
     for card in cards:
-        if card.status != "available":
+        if card.status != "available" or card.xp_per_kill < min_xpk:
             continue
-        hunt = hunt_for(hunts, card.creature, level)
-        if not hunt or card.xp_per_kill < min_xpk:
-            continue
-        key = (hunt.casefold() in others, card.xp_per_kill)
-        if best_key is None or key > best_key:
-            best, best_key = (card, hunt), key
+        options = []
+        for hunt, other_level in others:
+            if hunt and levels_ok([level, other_level]) and any(
+                    h["name"].casefold() == hunt.casefold() for h in hunt_options(hunts, card.creature, level, over)):
+                options.append((hunt, True))
+        solo = hunt_for(hunts, card.creature, level)
+        if solo:
+            options.append((solo, False))
+        for hunt, together in options:
+            key = (together, card.xp_per_kill)
+            if best_key is None or key > best_key:
+                best, best_key = (card, hunt, together), key
     return best
 
 
