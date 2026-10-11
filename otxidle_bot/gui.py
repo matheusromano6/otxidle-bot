@@ -21,7 +21,7 @@ CONFIG_PATH = os.path.join(ROOT, "config.json")
 MEMORY_PATH = os.path.join(ROOT, "memory.json")
 DEFAULT_CHOICE = "Padrão da vocação"
 BG, PANEL, PANEL_ALT, BORDER = "#101418", "#161c22", "#1d252d", "#2b3640"
-TEXT, MUTED, ACCENT, ACCENT_HOVER, DANGER, WARN = "#e6edf3", "#8b98a5", "#3fb950", "#2ea043", "#f85149", "#d29922"
+TEXT, MUTED, ACCENT, ACCENT_HOVER, DANGER, WARN = "#e6edf3", "#8b98a5", "#ff8c1a", "#e67a0f", "#f85149", "#d29922"
 PHASES = {"hunting": "caçando", "city": "cidade", "training": "treinando", "leaving": "saindo", "unknown": "?"}
 MAX_LOG_LINES = 500
 
@@ -60,7 +60,7 @@ class App:
 
         self._build_header()
         self.tabs = ctk.CTkTabview(root, fg_color=PANEL, segmented_button_selected_color=ACCENT,
-                                   segmented_button_selected_hover_color=ACCENT_HOVER, text_color="#04140a")
+                                   segmented_button_selected_hover_color=ACCENT_HOVER, text_color="#1a0d00")
         self.tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
         for name in ("Contas", "Regras", "Tasks", "Party", "Treino", "Log"):
             self.tabs.add(name)
@@ -113,7 +113,7 @@ class App:
                                       fg_color=PANEL_ALT, hover_color=BORDER, text_color=TEXT)
         self.stop_btn.pack(side="right", padx=4)
         self.start_btn = ctk.CTkButton(bar, text="Iniciar", width=90, command=self.start, fg_color=ACCENT,
-                                       hover_color=ACCENT_HOVER, text_color="#04140a")
+                                       hover_color=ACCENT_HOVER, text_color="#1a0d00")
         self.start_btn.pack(side="right", padx=4)
         self.update_btn = ctk.CTkButton(bar, text="Atualizar", width=90, command=self.start_update, fg_color=PANEL_ALT,
                                         hover_color=BORDER, text_color=TEXT)
@@ -196,7 +196,7 @@ class App:
             result["ok"] = value
             win.destroy()
 
-        ctk.CTkButton(row, text="Atualizar", command=lambda: answer(True), fg_color=ACCENT, hover_color=ACCENT_HOVER, text_color="#04140a").pack(side="left", padx=8)
+        ctk.CTkButton(row, text="Atualizar", command=lambda: answer(True), fg_color=ACCENT, hover_color=ACCENT_HOVER, text_color="#1a0d00").pack(side="left", padx=8)
         ctk.CTkButton(row, text="Cancelar", command=lambda: answer(False), fg_color=PANEL_ALT, hover_color=BORDER, text_color=TEXT).pack(side="left", padx=8)
         win.protocol("WM_DELETE_WINDOW", lambda: answer(False))
         win.grab_set()
@@ -313,7 +313,7 @@ class App:
         ctk.CTkCheckBox(grid, text="Mandar o grupo treinar quando a stamina de caça acabar", variable=self.training_var,
                         fg_color=ACCENT, text_color=TEXT).grid(row=7, column=0, columnspan=3, sticky="w", pady=8)
         ctk.CTkButton(grid, text="Salvar regras", command=self._save_rules, fg_color=ACCENT, hover_color=ACCENT_HOVER,
-                      text_color="#04140a").grid(row=8, column=0, sticky="w", pady=10)
+                      text_color="#1a0d00").grid(row=8, column=0, sticky="w", pady=10)
         self.rules_msg = ctk.CTkLabel(grid, text="", text_color=MUTED)
         self.rules_msg.grid(row=8, column=1, columnspan=2, sticky="w")
         ctk.CTkLabel(tab, text="Na venda o bot usa 'SELECIONAR TUDO' da venda rápida: vende tudo do inventário. "
@@ -464,7 +464,7 @@ class App:
         ctk.CTkCheckBox(grid, text="Quem terminou ajuda quem ainda está em task", variable=self.task_helpers,
                         fg_color=ACCENT, text_color=TEXT).grid(row=5, column=0, columnspan=3, sticky="w", pady=8)
         ctk.CTkButton(grid, text="Salvar tasks", command=self._save_tasks, fg_color=ACCENT, hover_color=ACCENT_HOVER,
-                      text_color="#04140a").grid(row=6, column=0, sticky="w", pady=6)
+                      text_color="#1a0d00").grid(row=6, column=0, sticky="w", pady=6)
         self.tasks_msg = ctk.CTkLabel(grid, text="", text_color=MUTED)
         self.tasks_msg.grid(row=6, column=1, columnspan=2, sticky="w")
 
@@ -565,7 +565,7 @@ class App:
         ctk.CTkLabel(win, text=hint, text_color=MUTED, wraplength=390).pack(padx=20, pady=(0, 16))
         row = ctk.CTkFrame(win, fg_color="transparent")
         row.pack()
-        ctk.CTkButton(row, text="Guardar na bandeja", command=lambda: choose("tray"), fg_color=ACCENT, hover_color=ACCENT_HOVER, text_color="#04140a").pack(side="left", padx=6)
+        ctk.CTkButton(row, text="Guardar na bandeja", command=lambda: choose("tray"), fg_color=ACCENT, hover_color=ACCENT_HOVER, text_color="#1a0d00").pack(side="left", padx=6)
         ctk.CTkButton(row, text="Fechar de vez", command=lambda: choose("quit"), fg_color=PANEL_ALT, hover_color=BORDER, text_color=TEXT).pack(side="left", padx=6)
         ctk.CTkButton(row, text="Cancelar", command=lambda: choose("cancel"), fg_color="transparent", hover_color=BORDER, text_color=MUTED).pack(side="left", padx=6)
         win.protocol("WM_DELETE_WINDOW", lambda: choose("cancel"))
