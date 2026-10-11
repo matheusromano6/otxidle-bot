@@ -1,0 +1,77 @@
+"""Configuracao do bot (config.json ao lado do .exe). O que nao estiver no arquivo usa o padrao daqui;
+arquivo novo e' criado com os padroes."""
+import copy
+import json
+import os
+
+# cards da aba TRAINING do jogo (confirmado ao vivo; o 'Boneco de Treino' fica de fora)
+ALL_SKILLS = ["Magic", "Fist", "Club", "Sword", "Axe", "Distance"]
+
+DEFAULTS = {
+    # onde o IdleDeck esta com a depuracao remota ligada (a mesma porta do bot do Huntera)
+    "cdp_url": "http://127.0.0.1:9224",
+    "poll_seconds": 3,
+    # sai da caça pra vender quando QUALQUER conta do grupo chegar nisso (% da capacidade usada).
+    # Em party o loot vai todo pra mochila do LIDER, entao na pratica e' a capacidade dele.
+    "capacity_pct": 85,
+    # stamina de CAÇA: quando QUALQUER conta chegar em 'stamina_minutes' o grupo vai pra cidade, vende e treina
+    # (o treino usa a stamina de TREINO, separada); volta a caçar quando TODAS chegarem em 'resume_stamina_minutes'
+    "training": {
+        "enabled": True,
+        "stamina_minutes": 15,
+        "resume_stamina_minutes": 600,
+        "by_name": {},                    # nome (minusculas) -> card do treino (Magic/Fist/Club/Sword/Axe/Distance)
+        "skills": {"knight": "Axe", "paladin": "Distance", "druid": "Magic", "sorcerer": "Magic"},
+    },
+    # party: o lider convida os membros pela lista de AMIGOS (na cidade); cada membro aceita o convite.
+    # O lider escolhe a caça e todos entram juntos; o lider saindo traz todos (a party continua).
+    "party": {
+        "enabled": False,
+        "leader": "",                     # nome (minusculas)
+        "members": [],                    # nomes (minusculas)
+    },
+    # pra onde o grupo vai quando o bot nao sabe a ultima caça (memory.json)
+    "default_hunt": "",
+    # conta parada na cidade por mais disso (sem o bot ter levado) -> o bot assume (vende e volta a caçar)
+    "idle_city_seconds": 60,
+    # membro que nao entrou na party (ex.: level fora dos 2/3 do lider) fica de fora por esse tempo
+    "party_skip_seconds": 1800,
+    "cooldown_fail_seconds": 300,
+}
+
+
+def skill_for(training_cfg, name, vocation):
+    """Card de treino da conta: escolha por nome, senao o padrao da vocacao ('Elite Knight' -> knight)."""
+    chosen = (training_cfg.get("by_name") or {}).get((name or "").casefold())
+    if chosen:
+        return chosen
+    v = (vocation or "").casefold()
+    for key, skill in training_cfg["skills"].items():
+        if key in v:
+            return skill
+    return None
+
+
+def _merge(base, extra):
+    out = copy.deepcopy(base)
+    for key, value in (extra or {}).items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _merge(out[key], value)
+        else:
+            out[key] = value
+    return out
+
+
+def load(path):
+    data = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as file:
+            data = json.load(file)
+    else:
+        save(path, DEFAULTS)
+    return _merge(DEFAULTS, data)
+
+
+def save(path, config):
+    with open(path, "w", encoding="utf-8") as file:
+        json.dump(config, file, ensure_ascii=False, indent=2)
