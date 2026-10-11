@@ -145,7 +145,13 @@ class Engine:
 
     def tick(self):
         states = self.read_all()
-        accounts = [a for a in self.accounts if a.name in states]
+        for acc in [a for a in self.accounts if a.name in states and a.state.phase == "offline"]:
+            if time.time() >= self.cooldown.get(acc.name, 0):
+                self._safe(acc.name, acc.login, [acc])          # o jogo derrubou: entra de novo
+        for acc in [a for a in self.accounts if a.name in states and any(m.startswith("PROMOÇÃO") for m in a.state.modals)]:
+            self._safe(acc.name, acc.dismiss_notices, [acc])
+        states = {n: st for n, st in states.items() if st.phase != "offline"}
+        accounts = [a for a in self.accounts if a.name in states and a.state.phase != "offline"]
         if self.tasks_on:
             if self.hunts is None:
                 self.hunts = T.load_hunts()

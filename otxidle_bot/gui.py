@@ -685,7 +685,9 @@ class App:
 
 def main():
     root = ctk.CTk()
-    App(root)
+    app = App(root)
+    if "--iniciar" in sys.argv:          # OtxIdleBot.exe --iniciar: ja abre rodando (atalho / reinicio remoto)
+        root.after(1500, app.start)
     root.mainloop()
 
 

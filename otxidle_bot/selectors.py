@@ -12,6 +12,11 @@ STAMINA_HUNT_BAR = '.ta-bar[aria-label="Stamina de caça restante"]'
 STAMINA_TRAIN_BAR = '.ta-bar[aria-label="Stamina de treino restante"]'
 PARTY_CHIP = ".gs-chip.gs-party"         # aria-label "Party: 4 de 4 membros"
 
+# --- deslogado (tela "OS SEUS PERSONAGENS": o jogo derruba quem fica parado; tambem apos server save?)
+OFFLINE_NAME = ".ob-hero-name"           # nome do personagem selecionado
+PLAY_NOW = ".ob-center-cta button"       # "JOGAR AGORA" -> cidade em ~1s
+NOTICE_OK_TEXT = "Entendi"               # aviso ao entrar (ex.: "PROMOÇÃO POR TEMPO LIMITADO") - so' informativo
+
 # --- caçando
 HUNT_PANEL = "section.hb-panel"          # "Caçando / <nome> / Tempo de caça ..."
 HUNT_NAME = "section.hb-panel .gs-panelhead p"

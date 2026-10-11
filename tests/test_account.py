@@ -34,6 +34,10 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(build_state(dict(RAW, hunting=False)).phase, "unknown")
         self.assertIsNone(build_state(RAW).cap_pct)          # sem o maximo (tooltip) nao ha %
 
+    def test_offline(self):
+        raw = {"name": "Conta Um", "offline": True, "modals": []}
+        self.assertEqual(build_state(raw).phase, "offline")
+
     def test_invite(self):
         raw = dict(RAW, hunting=False, city=True,
                    modals=["CONVITE DE PARTY\n\nConta Lider Level 12 convidou você para uma party\n\n58s restantes\nRECUSAR\nENTRAR"])

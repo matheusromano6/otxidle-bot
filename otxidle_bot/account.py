@@ -16,7 +16,8 @@ READ_JS = r"""() => {
   const hbButtons = hb ? [...hb.querySelectorAll('button')].map(b => (b.innerText || '').trim()) : [];
   const modals = [...document.querySelectorAll('.gm-modal')].filter(vis).map(m => (m.innerText || '').slice(0, 300));
   return {
-    name: txt('.gs-me .name'), level: txt('.gs-me .lvl'), vocation: txt('.gs-right .voc'),
+    name: txt('.gs-me .name') || txt('.ob-hero-name'), level: txt('.gs-me .lvl'), vocation: txt('.gs-right .voc'),
+    offline: vis(q('.ob-center-cta button')) && !q('.gs-me .name'),
     cap: txt('.gs-goldrow .cap'), gold: txt('.gs-goldrow .gold'),
     stamina_hunt: stam('.ta-bar[aria-label="Stamina de caça restante"]'),
     stamina_train: stam('.ta-bar[aria-label="Stamina de treino restante"]'),
@@ -61,7 +62,7 @@ class State:
     name: str = ""
     level: int = 0
     vocation: str = ""
-    phase: str = "unknown"          # hunting / leaving / city / training / unknown
+    phase: str = "unknown"          # hunting / leaving / city / training / offline / unknown
     hunt_name: str = ""
     cap_free: int = None
     cap_max: int = None
@@ -89,7 +90,9 @@ def build_state(raw, cap_max=None):
                cap_free=parse_int(raw.get("cap")), cap_max=cap_max, gold=parse_int(raw.get("gold")),
                stamina_hunt=parse_hm(raw.get("stamina_hunt")), stamina_train=parse_hm(raw.get("stamina_train")),
                party_size=parse_party(raw.get("party")), modals=list(raw.get("modals") or []))
-    if raw.get("hunting"):
+    if raw.get("offline"):
+        st.phase = "offline"
+    elif raw.get("hunting"):
         st.phase = "leaving" if any(b.startswith(S.LEAVING_TEXT) for b in raw.get("hunt_buttons") or []) else "hunting"
     elif raw.get("training"):
         st.phase = "training"
@@ -184,6 +187,25 @@ class Account:
         return self.read().phase
 
     # --------------------------------------------------------------- acoes
+    def login(self):
+        """Tela de personagens (deslogado): JOGAR AGORA -> cidade; fecha os avisos informativos que aparecem."""
+        self._click(self.page.locator(S.PLAY_NOW, has_text="JOGAR").first)
+        ok = self._wait(lambda: self.read().phase in ("city", "training", "hunting"), 20, 1)
+        time.sleep(1)
+        self.dismiss_notices()
+        if not ok:
+            raise GameError("não entrou no jogo")
+        self.log(f"{self.name}: estava deslogado - entrou no jogo de novo")
+
+    def dismiss_notices(self):
+        """Fecha avisos que so' tem 'Entendi' (promoção etc.). Nunca clica em compra."""
+        for _ in range(3):
+            button = self.page.locator(S.MODAL + " button", has_text=S.NOTICE_OK_TEXT)
+            if not button.count():
+                return
+            self._click(button.first)
+            time.sleep(0.6)
+
     def finish_hunt(self):
         """Clica 'Finalizar Hunt' (sem confirmacao; sai em 5s). Em party, a LIDER leva todos."""
         if self.state.phase == "leaving":

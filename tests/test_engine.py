@@ -304,6 +304,13 @@ class EngineV1Test(unittest.TestCase):
         eng.tick()
         self.assertEqual(acc.actions[-2:], ["sell", "train:Axe"])
 
+    def test_offline_account_logs_in(self):
+        w = World()
+        acc = FakeAccount(w, "Solo", phase="offline")
+        acc.login = lambda: (acc.actions.append("login"), setattr(acc.state, "phase", "city"))
+        engine_for(w, make_cfg(default_hunt="Troll Hills")).tick()
+        self.assertEqual(acc.actions, ["login"])
+
     def test_invite_from_stranger_ignored(self):
         w = World()
         acc = FakeAccount(w, "Um")

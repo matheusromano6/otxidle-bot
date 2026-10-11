@@ -199,3 +199,9 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   pelo USUARIO e' respeitado (conta fica fora do plano e nao e' encerrada). Treino do bot (stamina) que cair e'
   reiniciado. Ainda nao visto: o que acontece quando as cargas acabam (treino continua no boneco ou para).
 - A interface agora grava `logs/otxidle_AAAA-MM-DD.log` ao lado do .exe (antes so na janela).
+
+## Deslogado (11/10/2026, ao vivo)
+- Contas paradas na cidade sao DESLOGADAS pelo jogo: a pagina vai pra tela 'OS SEUS PERSONAGENS' (`.ob-hero-name` = nome,
+  `.ob-status.is-offline`, `.ob-center-cta button` 'JOGAR AGORA' -> cidade em ~1s). Ao entrar pode abrir `.gm-modal` 'PROMOÇÃO POR
+  TEMPO LIMITADO' com botao 'Entendi' (so informativo). v2.0.5: fase 'offline' -> login automatico + fecha o aviso.
+- `OtxIdleBot.exe --iniciar` abre ja rodando (usado pra reiniciar o bot remotamente).
