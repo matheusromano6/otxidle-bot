@@ -47,6 +47,16 @@ def solo_hunt(hunts, level):
     return max(easy, key=lambda h: h.get("rec_level") or 1)["name"] if easy else None
 
 
+def party_hunt(hunts, leader_level, levels, over=5):
+    """Caça automatica da party (quando 'Caça da party' esta vazia): recomendado ate 'over' acima do LIDER e level
+    minimo que TODOS alcançam (senao o jogo nao deixa entrar). Empate: a de mais tipos de criatura."""
+    low = min([leader_level] + list(levels))
+    options = [h for h in hunts if (h.get("rec_level") or 1) <= leader_level + over and (h.get("min_level") or 1) <= low]
+    if not options:
+        return None
+    return max(options, key=lambda h: (h.get("rec_level") or 1, len(h["creatures"])))["name"]
+
+
 def hunt_min_level(hunts, name):
     return next((h.get("min_level") or 1 for h in hunts if h["name"].casefold() == (name or "").casefold()), 1)
 
@@ -197,10 +207,13 @@ def _party_phase(accounts, hunts, cfg):
     members = [m.casefold() for m in party.get("members") or []]
     by = {a["name"].casefold(): a for a in accounts}
     groups = []
-    hunt = party.get("hunt") or cfg.get("default_hunt")
-    if party.get("enabled") and leader in by and hunt:
-        names = [by[leader]["name"]] + [by[m]["name"] for m in members if m in by and m != leader]
-        groups.append(PlanGroup(hunt, names, "party"))
+    if party.get("enabled") and leader in by:
+        names = [by[leader]["name"]] + [by[m]["name"] for m in members if m in by and m != leader
+                                        and levels_ok([by[leader]["level"], by[m]["level"]])]
+        over = cfg.get("tasks", {}).get("group_level_over", 5)
+        hunt = party.get("hunt") or party_hunt(hunts, by[leader]["level"], [by[n.casefold()]["level"] for n in names], over)
+        if hunt:
+            groups.append(PlanGroup(hunt, names, "party"))
     used = {n.casefold() for g in groups for n in g.accounts}
     for a in accounts:
         if a["name"].casefold() not in used:

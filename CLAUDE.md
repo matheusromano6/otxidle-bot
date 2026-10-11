@@ -180,3 +180,12 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - 158 caças: name, rec_level, min_level, where, creatures (do detalhe `.gm-panel` -> `.gm-creature`). Lido pela JOGAR->HUNTS
   (so na cidade) paginando `‹ 1/11 ›`; clicar os cards com dispatch_event (a gaveta cobre a lista).
 - Ex.: Orc Camp (8/1) Orc+Orc Warrior; Marsh Stalkers (15/12) Emerald Damselfly+Swampling+...; Folda Icefields (12/10) Frost Troll+Badger+...
+
+## Licoes (11/10/2026)
+- Release v2.0.1 saiu com o exe ANTIGO: o build rodou com `2>$null` enquanto o OtxIdleBot.exe de dist estava em uso, o
+  PyInstaller nao conseguiu sobrescrever e o zip pegou o binario velho (asset trocado depois com --clobber). Antes de
+  empacotar: conferir que o OtxIdleBot nao esta rodando, NAO esconder erros do build e conferir o icone/horario do exe
+  (ExtractIconEx le o recurso; ExtractAssociatedIcon usa o cache do Windows).
+- Icone: "OX" laranja (#ff8c1a) gerado com Pillow; destaque laranja na interface (Huntera = "H" verde).
+- Caça da party (fase de party): `party.hunt` manda; vazio = automatica (tasks.party_hunt): recomendado ate +5 do lider,
+  level minimo que TODOS alcançam, empate = mais tipos de criatura. Membro fora dos 2/3 do lider caça solo.

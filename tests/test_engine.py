@@ -351,6 +351,19 @@ class TasksLogicTest(unittest.TestCase):
         self.assertEqual((groups[1].accounts, groups[1].reason), (["Druid"], "solo"))
 
 
+    def test_party_hunt_automatic_from_leader(self):
+        # lider 14 (+5 = recomendado ate 19), membro mais baixo 10: Marsh Stalkers (min 12) fica de fora
+        self.assertEqual(T.party_hunt(HUNTS, 14, [12, 10]), "Folda Icefields")
+        self.assertEqual(T.party_hunt(HUNTS, 14, [12, 13]), "Marsh Stalkers")
+        cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["pally", "baixo"], "hunt": ""})
+        accs = [{"name": "Kina", "level": 14, "task_hunt": None, "done": True},
+                {"name": "Pally", "level": 12, "task_hunt": None, "done": True},
+                {"name": "Baixo", "level": 8, "task_hunt": None, "done": True}]      # 8 fora dos 2/3 de 14
+        groups = T.plan(accs, HUNTS, cfg)
+        self.assertEqual((groups[0].hunt, groups[0].accounts), ("Marsh Stalkers", ["Kina", "Pally"]))
+        self.assertEqual((groups[1].accounts, groups[1].reason), (["Baixo"], "solo"))
+
+
 class EngineTasksTest(unittest.TestCase):
     def test_completes_rerolls_and_picks_while_hunting(self):
         w = World()

@@ -376,6 +376,7 @@ class App:
         entry.pack(side="left", padx=8)
         entry.bind("<FocusOut>", lambda _e: self._party_changed())
         entry.bind("<Return>", lambda _e: self._party_changed())
+        ctk.CTkLabel(row, text="(vazio = automática pelo level do líder)", text_color=MUTED).pack(side="left")
         ctk.CTkLabel(tab, text="Quem pode ser chamado pra party:", text_color=TEXT).pack(anchor="w", padx=14)
         self.party_members_frame = ctk.CTkFrame(tab, fg_color=PANEL_ALT)
         self.party_members_frame.pack(fill="x", padx=14, pady=(6, 10))
