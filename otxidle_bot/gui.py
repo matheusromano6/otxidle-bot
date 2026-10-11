@@ -11,7 +11,7 @@ from tkinter import ttk
 
 import customtkinter as ctk
 
-from . import VERSION, config, updater
+from . import VERSION, config, tasks, updater
 from .memory import Memory
 from .paths import app_dir, resource_dir
 from .runner import Runner
@@ -57,6 +57,10 @@ class App:
         self.updating = False
         self.update_overlay = None
         self.ui_queue = queue.Queue()
+        try:
+            self.hunts = tasks.load_hunts()
+        except Exception:
+            self.hunts = []
 
         self._build_header()
         self.tabs = ctk.CTkTabview(root, fg_color=PANEL, segmented_button_selected_color=ACCENT,
@@ -371,12 +375,15 @@ class App:
                                                    command=lambda _v: self._party_changed(rebuild=True))
         self.party_leader_menu.pack(side="left", padx=8)
         ctk.CTkLabel(row, text="Caça da party:", text_color=TEXT).pack(side="left", padx=(20, 0))
-        self.party_hunt = tk.StringVar(value=self.cfg["party"].get("hunt") or "")
-        entry = ctk.CTkEntry(row, textvariable=self.party_hunt, width=200, fg_color=PANEL_ALT)
-        entry.pack(side="left", padx=8)
-        entry.bind("<FocusOut>", lambda _e: self._party_changed())
-        entry.bind("<Return>", lambda _e: self._party_changed())
-        ctk.CTkLabel(row, text="(vazio = automática pelo level do líder)", text_color=MUTED).pack(side="left")
+        self.party_hunt = tk.StringVar(value="")
+        self.party_hunt_labels = {}           # texto da lista -> nome da caça ("" = automatica)
+        self.party_hunt_menu = ctk.CTkOptionMenu(row, values=["-"], variable=self.party_hunt, width=330, fg_color=PANEL_ALT,
+                                                 dynamic_resizing=False, command=lambda _v: self._party_changed())
+        self.party_hunt_menu.pack(side="left", padx=8)
+        ctk.CTkLabel(tab, text="A lista mostra só as caças que o grupo marcado pode fazer: recomendado até 5 levels acima do "
+                               "líder e level mínimo que todos alcançam. 'Automática' escolhe a mais forte delas e acompanha "
+                               "os levels conforme sobem.", text_color=MUTED, wraplength=840, justify="left"
+                     ).pack(anchor="w", padx=14, pady=(0, 8))
         ctk.CTkLabel(tab, text="Quem pode ser chamado pra party:", text_color=TEXT).pack(anchor="w", padx=14)
         self.party_members_frame = ctk.CTkFrame(tab, fg_color=PANEL_ALT)
         self.party_members_frame.pack(fill="x", padx=14, pady=(6, 10))
@@ -403,6 +410,7 @@ class App:
         if not accounts:
             ctk.CTkLabel(self.party_members_frame, text="Nenhuma conta vista ainda. Inicie o bot com as contas abertas.",
                          text_color=MUTED).pack(anchor="w", padx=10, pady=8)
+            self._refresh_party_hunts()
             return
         members = {m.casefold() for m in party.get("members") or []}
         lead_level = (accounts.get(leader) or {}).get("level") or 0
@@ -417,9 +425,37 @@ class App:
             line.pack(fill="x", padx=10, pady=2)
             ctk.CTkCheckBox(line, text=info["name"], variable=var, command=self._party_changed, fg_color=ACCENT,
                             text_color=TEXT, width=220).pack(side="left")
-            ctk.CTkLabel(line, text=note + ("   ⚠ level fora dos 2/3 do líder" if warn else ""),
+            ctk.CTkLabel(line, text=note + ("   ⚠ level fora dos 2/3 do líder (caça solo)" if warn else ""),
                          text_color=WARN if warn else MUTED).pack(side="left", padx=8)
             self.party_member_vars[key] = var
+        self._refresh_party_hunts()
+
+    def _refresh_party_hunts(self):
+        """Lista da 'Caça da party': Automática (com a escolha de agora) + caças que o grupo marcado pode fazer."""
+        party = self.cfg["party"]
+        accounts = self.party_accounts
+        leader = (party.get("leader") or "").casefold()
+        lead_level = (accounts.get(leader) or {}).get("level") or 0
+        chosen = party.get("hunt") or ""
+        if not self.hunts or not lead_level:
+            self.party_hunt_labels = {"Automática (escolha o líder)": ""}
+        else:
+            levels = [lead_level] + [(accounts.get(m) or {}).get("level") or 0 for m in party.get("members") or []]
+            levels = [lv for lv in levels if lv and not outside_two_thirds(lead_level, lv)]
+            over = self.cfg["tasks"].get("group_level_over", 5)
+            low = min(levels)
+            options = sorted([h for h in self.hunts if (h.get("rec_level") or 1) <= lead_level + over
+                              and (h.get("min_level") or 1) <= low],
+                             key=lambda h: (-(h.get("rec_level") or 1), h["name"]))
+            auto = tasks.party_hunt(self.hunts, lead_level, levels, over)
+            self.party_hunt_labels = {f"Automática → {auto or 'nenhuma'}": ""}
+            for h in options:
+                self.party_hunt_labels[f"{h['name']}  (rec {h.get('rec_level')} · mín {h.get('min_level')})"] = h["name"]
+            if chosen and chosen not in self.party_hunt_labels.values():
+                self.party_hunt_labels[f"{chosen}  ⚠ fora do level do grupo"] = chosen
+        self.party_hunt_menu.configure(values=list(self.party_hunt_labels))
+        self.party_hunt.set(next(label for label, name in self.party_hunt_labels.items() if name == chosen)
+                            if chosen in self.party_hunt_labels.values() else next(iter(self.party_hunt_labels)))
 
     def _party_changed(self, rebuild=False):
         party = self.cfg["party"]
@@ -427,10 +463,12 @@ class App:
         party["enabled"] = bool(self.party_enabled.get())
         party["leader"] = leader
         party["members"] = sorted(k for k, var in self.party_member_vars.items() if var.get() and k != leader)
-        party["hunt"] = self.party_hunt.get().strip()
+        party["hunt"] = self.party_hunt_labels.get(self.party_hunt.get(), party.get("hunt") or "")
         self.save()
         if rebuild:
             self._refresh_party(self.runner.snapshot["states"], force=True)
+        else:
+            self._refresh_party_hunts()
         self.log(f"party: {'ligada' if party['enabled'] else 'desligada'} - líder {leader or '-'}, "
                  f"membros {', '.join(party['members']) or '-'}")
 
