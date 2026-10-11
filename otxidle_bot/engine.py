@@ -112,6 +112,7 @@ class Engine:
         self.mismatch = {}            # grupo -> vezes seguidas com party/caça diferente do plano
         self.expected_leader = {}     # conta -> lider do grupo dela (aceita convite so' dele)
         self.city_board = set()       # contas que ja releram o quadro nesta ida a cidade/treino
+        self.exercise_try = {}        # conta -> quando pode tentar ligar a arma de exercicio de novo
         self._warned = set()
 
     # ---------------------------------------------------------------- loop
@@ -151,7 +152,8 @@ class Engine:
             for acc in accounts:
                 if time.time() >= self.cooldown.get(acc.name, 0):
                     self._safe(acc.name, lambda acc=acc: self._task_upkeep(acc), [acc])
-        training = [a for a in accounts if self.memory.training(a.name)]
+        # treinando: as que o bot mandou (stamina) e as que VOCE colocou pra treinar (o bot respeita e nao encerra)
+        training = [a for a in accounts if self.memory.training(a.name) or a.state.phase == "training"]
         playing = [a for a in accounts if a not in training]
         groups = self._groups(playing)
         self.expected_leader = {a.name.casefold(): g.leader.name for g in groups for a in g.members}
@@ -341,6 +343,12 @@ class Engine:
             acc.finish_hunt()
             return
         if st.phase == "training":
+            if self.cfg["training"].get("use_exercise", True) and any(not d.get("on") for d in st.drills) \
+                    and time.time() >= self.exercise_try.get(acc.name, 0):
+                self.exercise_try[acc.name] = time.time() + 300      # se nao ligar, tenta de novo em 5 min
+                acc.use_exercise_weapon()
+            if not self.memory.training(acc.name):
+                return                      # treino que voce iniciou: o bot nao encerra
             if training_done(st, self.cfg):
                 acc.end_training()
                 self.memory.set_training(acc.name, False)

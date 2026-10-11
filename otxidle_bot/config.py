@@ -21,6 +21,7 @@ DEFAULTS = {
         "stamina_minutes": 15,
         "resume_stamina_minutes": 600,
         "by_name": {},                    # nome (minusculas) -> card do treino (Magic/Fist/Club/Sword/Axe/Distance)
+        "use_exercise": True,             # liga a arma de exercicio (recompensa diaria) quando a conta tem uma
         "skills": {"knight": "Axe", "paladin": "Distance", "druid": "Magic", "sorcerer": "Magic"},
     },
     # party: o lider convida os membros pela lista de AMIGOS (na cidade); cada membro aceita o convite.

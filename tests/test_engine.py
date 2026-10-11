@@ -98,6 +98,11 @@ class FakeAccount:
         self.actions.append("end_training")
         self.state.phase = "city"
 
+    def use_exercise_weapon(self):
+        self.actions.append("exercise")
+        self.state.drills = [dict(d, on=True) for d in self.state.drills]
+        return True
+
     # party
     def read_party(self):
         leader, members = self.world.party_of(self.name)
@@ -270,6 +275,34 @@ class EngineV1Test(unittest.TestCase):
         
         eng.tick()
         self.assertEqual(acc.actions, ["end_training", "sell", "hunt:Troll Hills"])
+
+    def test_manual_training_is_respected_and_uses_exercise(self):
+        w = World()
+        kina = FakeAccount(w, "Kina", phase="training", stamina=600)
+        kina.state.drills = [{"label": "Train with the Exercise Club", "on": False}]
+        um = FakeAccount(w, "Um", phase="city")
+        eng = engine_for(w, make_cfg(party={"enabled": True, "leader": "kina", "members": ["um"]}, idle_city_seconds=0,
+                                     default_hunt="Troll Hills"))
+        eng.tick()
+        self.assertEqual(kina.actions, ["exercise"])             # liga a arma, NAO encerra o treino manual
+        self.assertEqual(kina.state.phase, "training")
+        self.assertIn("hunt:Troll Hills", um.actions)            # o resto segue sem o lider que esta treinando
+        eng.tick()
+        self.assertEqual(kina.actions, ["exercise"])
+
+    def test_bot_training_restarts_with_exercise(self):
+        w = World()
+        acc = FakeAccount(w, "Solo", phase="city", stamina=100, vocation="Knight")
+        eng = engine_for(w, make_cfg())
+        eng.memory.set_training("Solo", True)
+        eng.tick()
+        self.assertEqual(acc.actions, ["sell", "train:Axe"])
+        acc.state.drills = [{"label": "Train with the Exercise Axe", "on": False}]
+        eng.tick()
+        self.assertEqual(acc.actions[-1], "exercise")
+        acc.state.phase = "city"                                  # treino caiu (ex.: acabaram as cargas)
+        eng.tick()
+        self.assertEqual(acc.actions[-2:], ["sell", "train:Axe"])
 
     def test_invite_from_stranger_ignored(self):
         w = World()

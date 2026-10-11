@@ -86,7 +86,16 @@ class App:
 
     # ------------------------------------------------------------------ util
     def log(self, message):
-        self.log_queue.put(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {message}")
+        now = datetime.datetime.now()
+        line = f"[{now.strftime('%H:%M:%S')}] {message}"
+        self.log_queue.put(line)
+        try:                      # tambem em arquivo (logs/otxidle_AAAA-MM-DD.log ao lado do .exe)
+            folder = os.path.join(ROOT, "logs")
+            os.makedirs(folder, exist_ok=True)
+            with open(os.path.join(folder, f"otxidle_{now.strftime('%Y-%m-%d')}.log"), "a", encoding="utf-8") as file:
+                file.write(line + "\n")
+        except OSError:
+            pass
 
     def save(self):
         config.save(CONFIG_PATH, self.cfg)

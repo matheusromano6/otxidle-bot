@@ -22,6 +22,10 @@ READ_JS = r"""() => {
     stamina_train: stam('.ta-bar[aria-label="Stamina de treino restante"]'),
     hunting: vis(hb), hunt_name: (q('section.hb-panel .gs-panelhead p')?.innerText || '').trim(), hunt_buttons: hbButtons,
     training: vis(q('section.ta')), city: vis(q('button.gs-cta.gs-cta-play')),
+    train_weapon: (() => { const rows = [...document.querySelectorAll('section.ta .ta-row')];
+      const r = rows.find(x => (x.children[0]?.innerText || '').trim() === 'Arma'); return r ? (r.children[1]?.innerText || '').trim() : ''; })(),
+    drills: [...document.querySelectorAll('.ta-drillbtn')].filter(vis).map(b => ({ label: b.getAttribute('aria-label') || '',
+      on: b.getAttribute('aria-selected') === 'true' })),
     party: q('.gs-chip.gs-party')?.getAttribute('aria-label') || '',
     tracker: [...document.querySelectorAll('section.ht-panel')].map(s => (s.getAttribute('aria-label') || '') + ' | ' + s.innerText).join(' || '),
     modals: modals, url: location.pathname,
@@ -68,6 +72,8 @@ class State:
     invite_from: str = ""           # nome de quem convidou (modal CONVITE DE PARTY aberto)
     task: tuple = None              # rastreador de tasks na tela: (criatura, abates, precisa)
     tracker_shown: bool = False     # o painel 'Rastreador de Tasks' esta visivel
+    train_weapon: str = ""          # treino: "Só no boneco" ou as cargas da arma de exercicio ("498")
+    drills: list = field(default_factory=list)   # botoes de arma de exercicio: [{'label', 'on'}]
     modals: list = field(default_factory=list)
 
     @property
@@ -89,6 +95,8 @@ def build_state(raw, cap_max=None):
         st.phase = "training"
     elif raw.get("city"):
         st.phase = "city"
+    st.train_weapon = raw.get("train_weapon") or ""
+    st.drills = list(raw.get("drills") or [])
     tracker = raw.get("tracker") or ""
     for part in tracker.split(" || "):
         if part.startswith("Rastreador de Tasks"):
@@ -263,6 +271,18 @@ class Account:
                 return
         self.close_modals()
         raise GameError(f"treino '{skill}' nao encontrado")
+
+    def use_exercise_weapon(self):
+        """Treinando: liga a arma de exercicio (botao `.ta-drillbtn` "Train with the Exercise Club" na barra de
+        ferramentas). Nao vai pra mao: o painel passa de "Arma: Só no boneco" pras cargas e gasta ~1 carga por ciclo."""
+        buttons = self.page.locator(S.EXERCISE_BUTTON + '[aria-selected="false"]')
+        if not buttons.count():
+            return False
+        label = buttons.first.get_attribute("aria-label") or "arma de exercício"
+        self._click(buttons.first)
+        time.sleep(1)
+        self.log(f"{self.name}: {label.replace('Train with the ', 'treinando com ')}")
+        return True
 
     def end_training(self):
         self._click(self.page.locator(S.TRAIN_PANEL + " button", has_text=S.END_TRAIN_TEXT).first)

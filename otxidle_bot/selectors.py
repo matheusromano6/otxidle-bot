@@ -20,6 +20,7 @@ LEAVING_TEXT = "Saindo em"               # "Saindo em 4s…" (5s, nao clicar de 
 
 # --- treino
 TRAIN_PANEL = "section.ta"               # aria "Analisador de Treino"
+EXERCISE_BUTTON = ".ta-drillbtn"         # treinando: "Train with the Exercise Club" (aria-selected = ligado; tooltip "N charges left")
 END_TRAIN_TEXT = "End Training"
 
 # --- cidade

@@ -189,3 +189,13 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - Icone: "OX" laranja (#ff8c1a) gerado com Pillow; destaque laranja na interface (Huntera = "H" verde).
 - Caça da party (fase de party): `party.hunt` manda; vazio = automatica (tasks.party_hunt): recomendado ate +5 do lider,
   level minimo que TODOS alcançam, empate = mais tipos de criatura. Membro fora dos 2/3 do lider caça solo.
+
+## Treino e arma de exercicio (testado ao vivo com MR Kina, 11/10/2026)
+- Treinando aparece na barra de ferramentas `button.gs-tool.ta-drillbtn` aria "Train with the Exercise Club"
+  (`aria-selected` = ligado; tooltip "Exercise Club: 500 charges left"). Veio da recompensa diaria; nao fica na mochila.
+- Clicar LIGA a arma: NAO vai pra mao (Mace continuou equipada); o painel `section.ta` linha "Arma" passa de
+  "Só no boneco" pras cargas ("498") e gasta ~1 carga por ciclo (~3s); o skill sobe MUITO mais rapido.
+- Bot (v2.0.4): liga a arma em qualquer treino (`training.use_exercise`, tenta de novo a cada 5 min). Treino iniciado
+  pelo USUARIO e' respeitado (conta fica fora do plano e nao e' encerrada). Treino do bot (stamina) que cair e'
+  reiniciado. Ainda nao visto: o que acontece quando as cargas acabam (treino continua no boneco ou para).
+- A interface agora grava `logs/otxidle_AAAA-MM-DD.log` ao lado do .exe (antes so na janela).
