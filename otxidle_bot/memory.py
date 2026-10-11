@@ -1,4 +1,4 @@
-"""Memoria pequena em disco (memory.json): ultima caça e modo (caça/treino) de cada grupo e as contas ja vistas,
+"""Memoria pequena em disco (memory.json): ultima caça de cada grupo, tasks do dia, quem esta treinando e as contas vistas,
 pra continuar certo mesmo se o bot for fechado e aberto de novo."""
 import json
 import os
@@ -27,6 +27,30 @@ class Memory:
         if all(current.get(k) == v for k, v in values.items()):
             return
         current.update(values)
+        self._save()
+
+    # treino por conta (stamina de caça acabou): sai do plano ate recuperar
+    def training(self, name):
+        return name.casefold() in (self.data.get("training") or [])
+
+    def set_training(self, name, value):
+        current = set(self.data.get("training") or [])
+        new = (current | {name.casefold()}) if value else (current - {name.casefold()})
+        if new != current:
+            self.data["training"] = sorted(new)
+            self._save()
+
+    # tasks do dia: {'day': 'AAAA-MM-DD', 'accounts': {nome: {done, creature, hunt, stuck, checked}}}
+    def tasks_today(self, day):
+        tasks = self.data.get("tasks") or {}
+        return dict(tasks.get("accounts") or {}) if tasks.get("day") == day else {}
+
+    def set_task(self, day, name, info):
+        tasks = self.data.get("tasks") or {}
+        if tasks.get("day") != day:
+            tasks = {"day": day, "accounts": {}}
+        tasks["accounts"][name.casefold()] = info
+        self.data["tasks"] = tasks
         self._save()
 
     def seen(self):

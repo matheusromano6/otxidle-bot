@@ -36,6 +36,23 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   (% que sobra: equipamento/pouch; ~30-47% nesses personagens) e so' sai de novo com limite E piso+10 (evita loop).
 - Teste ao vivo 11/10: party de 4 (Kina lider) em Folda Icefields, ciclo de capacidade completo (sair -> 4 vendas -> voltar).
 
+## v2.0.0 - tasks diarias + grupos dinamicos (11/10/2026)
+- Decisoes do usuario: 2 tasks Adepto por dia por conta; quem termina AJUDA quem falta (party, se o level deixar; senao solo
+  na melhor caça do level); quando TODAS terminam -> party configurada na `party.hunt`; plano mudou -> reagrupa NA HORA.
+  Dia vira em `tasks.reset_hour` (0h, palpite do usuario). Abates de task contam pra todos da party (usuario).
+- `tasks.py` (puro): parse_board/parse_tracker, hunt_for (maior rec_level <= level; senao a mais facil com min <= level),
+  choose_card (caça possivel + min_xp_per_kill; prefere caça de outra conta, depois XP/abate), plan (grupos por caça de
+  task respeitando 2/3 e 4 por party; ajudantes; fase de party), levels_ok.
+- Engine: _task_upkeep por conta (abre o quadro so' quando: 1a vez no dia, rastreador cheio, task trocada na mao, ou na
+  cidade sem task) -> _board (COMPLETAR, reroll na dificuldade, escolhe, ate max_rerolls; sem carta/token = 'stuck').
+  Grupos vem do plano; _mismatch (caça/tamanho da party diferente, 2 leituras seguidas) -> _leave + _town + _fix_party.
+  Treino agora e' POR CONTA (memory 'training'), fora do plano ate recuperar.
+- VALIDADO ao vivo: membro "Finalizar Hunt" -> so' ele volta e SAI da party (party de 2 se desfaz; lider segue caçando).
+  Convite pelo NOME (`.pt-add` input + `.pt-send` Convidar, com party criada por "Criar party") funciona SEM amizade.
+  v2 rodando: leu os 4 quadros, plano = Kina+Pally+Sorc (Orc Camp) e Druid solo (Spider Nest), ciclo de capacidade ok.
+- Ainda NAO visto ao vivo com o bot: entrega automatica + reroll + reagrupar; fase de party; virada do dia; "COLETAR DIÁRIO".
+- memory.json: `tasks` {day, accounts{nome: done, creature, hunt, stuck, checked, tracker_tried}}, `training` [nomes].
+
 ## Mapa do HUD (11/10/2026, ao vivo, so leitura, as 4 contas CAÇANDO solo)
 - Identidade: `.gs-topbar` innerText = "OtxIdle\n<level>\n<Nome>\n[29d]\nStore\n<coins> +" (3a linha = nome).
 - Caçando: `section.hb-panel[aria-label="Caça atual"]`: `.ti-section-label` "Caçando" + `p` com o nome da caça (ex: "Bone Crypt",

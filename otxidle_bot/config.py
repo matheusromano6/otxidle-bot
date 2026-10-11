@@ -29,6 +29,19 @@ DEFAULTS = {
         "enabled": False,
         "leader": "",                     # nome (minusculas)
         "members": [],                    # nomes (minusculas)
+        "hunt": "",                       # caça da party de grupo (fase de party das tasks); vazio = caçada padrao
+    },
+    # tasks diarias (v2): cada conta faz 'per_day' tasks na dificuldade escolhida; contas com task na mesma caça caçam
+    # juntas; quem termina ajuda quem falta (helpers); quando TODAS terminam, vai a party configurada pra party.hunt
+    "tasks": {
+        "enabled": True,
+        "per_day": 2,
+        "difficulty": "Adepto",
+        "helpers": True,
+        "min_xp_per_kill": 0,             # ignora cartas que pagam menos XP por abate (ex.: ratos)
+        "max_rerolls": 2,                 # rerolls seguidos procurando carta boa (cada um gasta 1 token)
+        "reset_hour": 0,                  # hora em que o dia das tasks vira
+        "solo_hunts": {},                 # nome (minusculas) -> caça solo; vazio = a melhor pro level (hunts.json)
     },
     # pra onde o grupo vai quando o bot nao sabe a ultima caça (memory.json)
     "default_hunt": "",

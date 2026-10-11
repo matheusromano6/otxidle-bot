@@ -10,7 +10,7 @@ import threading
 import time
 
 from . import VERSION, config
-from .engine import Engine, build_groups
+from .engine import Engine
 from .idledeck import Pool
 from .memory import Memory
 from .paths import app_dir
@@ -36,14 +36,17 @@ def fmt_min(minutes):
 
 def show_status(pool, cfg):
     accounts = pool.refresh()
-    engine = Engine(accounts, cfg, print)
+    engine = Engine(accounts, cfg, print, memory=Memory(os.path.join(ROOT, "memory.json")))
     states = engine.read_all()
     for st in states.values():
         cap = "?" if st.cap_pct is None else f"{st.cap_pct:.0f}% ({st.cap_max - st.cap_free}/{st.cap_max} oz)"
         print(f"- {st.name} ({st.vocation} {st.level}) | {st.phase} {st.hunt_name} | cap {cap} | stamina caça "
               f"{fmt_min(st.stamina_hunt)} treino {fmt_min(st.stamina_train)} | party {st.party_size or '-'}")
-    for group in build_groups([a for a in accounts if a.name in states], cfg):
-        print(f"  grupo: {group.label} ({'party' if group.is_party else 'solo'})")
+    if engine.tasks_on:
+        from . import tasks as T
+        engine.hunts = T.load_hunts()
+    for group in engine._groups([a for a in accounts if a.name in states]):
+        print(f"  grupo: {group.label} ({'party' if group.is_party else 'solo'}) -> {group.hunt or '-'} {group.reason}")
 
 
 def main(argv=None):

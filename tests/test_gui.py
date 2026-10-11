@@ -39,7 +39,7 @@ class GuiTest(unittest.TestCase):
             rows = [app.tree.item(i)["values"] for i in app.tree.get_children()]
             self.assertEqual(rows[0][0], "Lider")
             self.assertEqual(rows[0][4], "80%")
-            self.assertIn("party de Lider", rows[0][7])
+            self.assertIn("party de Lider", rows[0][8])
             self.assertIn("membro", app.party_member_vars)
             self.assertTrue(gui.outside_two_thirds(12, 7))
             self.assertFalse(gui.outside_two_thirds(12, 8))

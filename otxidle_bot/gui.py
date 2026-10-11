@@ -62,10 +62,11 @@ class App:
         self.tabs = ctk.CTkTabview(root, fg_color=PANEL, segmented_button_selected_color=ACCENT,
                                    segmented_button_selected_hover_color=ACCENT_HOVER, text_color="#04140a")
         self.tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
-        for name in ("Contas", "Regras", "Party", "Treino", "Log"):
+        for name in ("Contas", "Regras", "Tasks", "Party", "Treino", "Log"):
             self.tabs.add(name)
         self._build_accounts(self.tabs.tab("Contas"))
         self._build_rules(self.tabs.tab("Regras"))
+        self._build_tasks(self.tabs.tab("Tasks"))
         self._build_party(self.tabs.tab("Party"))
         self._build_training(self.tabs.tab("Treino"))
         self._build_log(self.tabs.tab("Log"))
@@ -241,9 +242,9 @@ class App:
         style.configure("H.Treeview", background=PANEL_ALT, fieldbackground=PANEL_ALT, foreground=TEXT, rowheight=28, borderwidth=0)
         style.configure("H.Treeview.Heading", background=PANEL, foreground=MUTED, borderwidth=0)
         style.map("H.Treeview", background=[("selected", BORDER)])
-        cols = ("conta", "voc", "fase", "caca", "cap", "stam", "treino", "grupo")
-        heads = ("Conta", "Vocação", "Fase", "Caça", "Capacidade", "Stamina caça", "Stamina treino", "Grupo")
-        widths = (130, 110, 80, 130, 90, 90, 95, 150)
+        cols = ("conta", "voc", "fase", "caca", "cap", "stam", "treino", "task", "grupo")
+        heads = ("Conta", "Vocação", "Fase", "Caça", "Cap.", "Stamina caça", "Treino", "Task", "Grupo")
+        widths = (120, 100, 75, 120, 50, 85, 60, 150, 150)
         self.tree = ttk.Treeview(tab, columns=cols, show="headings", style="H.Treeview", height=8)
         for c, h, w in zip(cols, heads, widths):
             self.tree.heading(c, text=h)
@@ -261,10 +262,19 @@ class App:
         self.tree.delete(*self.tree.get_children())
         for name, st in sorted(states.items()):
             cap = "?" if st.cap_pct is None else f"{st.cap_pct:.0f}%"
-            names = snap["groups"].get(group_of.get(name), [])
+            label = group_of.get(name)
+            names = snap["groups"].get(label, [])
+            target = (snap.get("hunts") or {}).get(label) or ""
+            info = (snap.get("tasks") or {}).get(name.casefold()) or {}
+            if st.task:
+                task = f"{st.task[0]} {st.task[1]}/{st.task[2]}"
+            else:
+                task = info.get("creature") or ("cota feita" if info.get("done") else "-")
+            task += f" ({info.get('done', 0)} hoje)" if info else ""
+            group = (f"party de {names[0]}" if len(names) > 1 else "solo") + (f" → {target}" if target else "")
             self.tree.insert("", "end", values=(name, f"{st.vocation} {st.level}", PHASES.get(st.phase, st.phase),
                                                 st.hunt_name or "-", cap, fmt_min(st.stamina_hunt), fmt_min(st.stamina_train),
-                                                f"party de {names[0]}" if len(names) > 1 else "solo"))
+                                                task, group))
         if self.runner.running:
             self.status.configure(text="● RODANDO" if self.runner.connected else "● CONECTANDO",
                                   text_color=ACCENT if self.runner.connected else WARN)
@@ -348,9 +358,10 @@ class App:
         self.party_enabled = tk.BooleanVar(value=bool(party.get("enabled")))
         ctk.CTkCheckBox(tab, text="Caçar em party (o líder monta a party e escolhe a caça)", variable=self.party_enabled,
                         command=self._party_changed, fg_color=ACCENT, text_color=TEXT).pack(anchor="w", padx=14, pady=(14, 4))
-        ctk.CTkLabel(tab, text="Na cidade o líder convida os membros pela lista de AMIGOS e cada membro aceita sozinho. "
-                               "Os membros precisam ser amigos do líder e ter level dentro de 2/3 do líder (regra do jogo). "
-                               "O loot vai pra mochila do líder; quando ele sai, todos voltam pra cidade e vendem.",
+        ctk.CTkLabel(tab, text="Na cidade o líder convida os membros pelo nome e cada membro aceita sozinho (não precisa ser "
+                               "amigo). Os levels precisam estar dentro de 2/3 do líder (regra do jogo). O loot vai pra mochila "
+                               "do líder; quando ele sai, todos voltam pra cidade e vendem. Com as tasks ligadas, esta party "
+                               "só se forma quando todas as contas terminam as tasks do dia.",
                      text_color=MUTED, wraplength=840, justify="left").pack(anchor="w", padx=14)
         row = ctk.CTkFrame(tab, fg_color="transparent")
         row.pack(fill="x", padx=14, pady=10)
@@ -359,6 +370,12 @@ class App:
         self.party_leader_menu = ctk.CTkOptionMenu(row, values=["-"], variable=self.party_leader, width=220, fg_color=PANEL_ALT,
                                                    command=lambda _v: self._party_changed(rebuild=True))
         self.party_leader_menu.pack(side="left", padx=8)
+        ctk.CTkLabel(row, text="Caça da party:", text_color=TEXT).pack(side="left", padx=(20, 0))
+        self.party_hunt = tk.StringVar(value=self.cfg["party"].get("hunt") or "")
+        entry = ctk.CTkEntry(row, textvariable=self.party_hunt, width=200, fg_color=PANEL_ALT)
+        entry.pack(side="left", padx=8)
+        entry.bind("<FocusOut>", lambda _e: self._party_changed())
+        entry.bind("<Return>", lambda _e: self._party_changed())
         ctk.CTkLabel(tab, text="Quem pode ser chamado pra party:", text_color=TEXT).pack(anchor="w", padx=14)
         self.party_members_frame = ctk.CTkFrame(tab, fg_color=PANEL_ALT)
         self.party_members_frame.pack(fill="x", padx=14, pady=(6, 10))
@@ -409,11 +426,64 @@ class App:
         party["enabled"] = bool(self.party_enabled.get())
         party["leader"] = leader
         party["members"] = sorted(k for k, var in self.party_member_vars.items() if var.get() and k != leader)
+        party["hunt"] = self.party_hunt.get().strip()
         self.save()
         if rebuild:
             self._refresh_party(self.runner.snapshot["states"], force=True)
         self.log(f"party: {'ligada' if party['enabled'] else 'desligada'} - líder {leader or '-'}, "
                  f"membros {', '.join(party['members']) or '-'}")
+
+    # ----------------------------------------------------------------- tasks
+    def _build_tasks(self, tab):
+        tasks = self.cfg["tasks"]
+        self.tasks_enabled = tk.BooleanVar(value=bool(tasks.get("enabled")))
+        ctk.CTkCheckBox(tab, text="Fazer as tasks diárias antes da party", variable=self.tasks_enabled, fg_color=ACCENT,
+                        text_color=TEXT).pack(anchor="w", padx=14, pady=(14, 4))
+        ctk.CTkLabel(tab, text="Cada conta faz suas tasks (contas com task na mesma caça caçam juntas em party). Quem termina "
+                               "ajuda quem falta, se o level permitir; senão caça solo. Quando todas batem a cota, a party "
+                               "configurada vai pra caça da party até o dia virar.",
+                     text_color=MUTED, wraplength=840, justify="left").pack(anchor="w", padx=14)
+        grid = ctk.CTkFrame(tab, fg_color="transparent")
+        grid.pack(anchor="nw", padx=14, pady=10)
+        self.task_vars = {}
+        rows = (("Tasks por dia (cada conta)", "per_day", "depois disso a conta ajuda as outras / vai pra party"),
+                ("XP mínimo por abate", "min_xp_per_kill", "cartas abaixo disso são ignoradas (ex.: 5 evita ratos)"),
+                ("Rerolls seguidos", "max_rerolls", "procurando carta boa (cada um gasta 1 token)"),
+                ("Hora que o dia vira", "reset_hour", "0 = meia-noite"))
+        for r, (label, key, hint) in enumerate(rows):
+            ctk.CTkLabel(grid, text=label, text_color=TEXT).grid(row=r, column=0, sticky="w", pady=4, padx=(0, 14))
+            var = tk.StringVar(value=str(tasks.get(key, 0)))
+            ctk.CTkEntry(grid, textvariable=var, width=90, fg_color=PANEL_ALT).grid(row=r, column=1, sticky="w")
+            ctk.CTkLabel(grid, text=hint, text_color=MUTED).grid(row=r, column=2, sticky="w", padx=12)
+            self.task_vars[key] = var
+        ctk.CTkLabel(grid, text="Dificuldade", text_color=TEXT).grid(row=4, column=0, sticky="w", pady=4)
+        self.task_difficulty = tk.StringVar(value=tasks.get("difficulty") or "Adepto")
+        ctk.CTkOptionMenu(grid, values=["Iniciante", "Adepto", "Experiente", "Mestre"], variable=self.task_difficulty,
+                          width=140, fg_color=PANEL_ALT).grid(row=4, column=1, sticky="w")
+        self.task_helpers = tk.BooleanVar(value=bool(tasks.get("helpers", True)))
+        ctk.CTkCheckBox(grid, text="Quem terminou ajuda quem ainda está em task", variable=self.task_helpers,
+                        fg_color=ACCENT, text_color=TEXT).grid(row=5, column=0, columnspan=3, sticky="w", pady=8)
+        ctk.CTkButton(grid, text="Salvar tasks", command=self._save_tasks, fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color="#04140a").grid(row=6, column=0, sticky="w", pady=6)
+        self.tasks_msg = ctk.CTkLabel(grid, text="", text_color=MUTED)
+        self.tasks_msg.grid(row=6, column=1, columnspan=2, sticky="w")
+
+    def _save_tasks(self):
+        tasks = self.cfg["tasks"]
+        try:
+            values = {k: float(v.get().replace(",", ".")) for k, v in self.task_vars.items()}
+            if any(v < 0 for v in values.values()) or values["reset_hour"] > 23:
+                raise ValueError
+        except ValueError:
+            self.tasks_msg.configure(text="Valor inválido (números positivos; hora de 0 a 23).", text_color=DANGER)
+            return
+        for key, value in values.items():
+            tasks[key] = int(value) if value == int(value) else value
+        tasks["enabled"] = bool(self.tasks_enabled.get())
+        tasks["difficulty"] = self.task_difficulty.get()
+        tasks["helpers"] = bool(self.task_helpers.get())
+        self.save()
+        self.tasks_msg.configure(text="Salvo.", text_color=ACCENT)
 
     # ----------------------------------------------------------------- treino
     def _build_training(self, tab):

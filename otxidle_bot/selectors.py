@@ -53,3 +53,16 @@ FRIEND_ROW = ".fr-row"                   # b = nome, small = "Level 9 · Druid",
 FRIEND_INVITE = ".fr-accept"             # "CONVIDAR" (o outro .fr-accept e' MENSAGEM; .fr-decline REMOVER: nunca)
 INVITE_TITLE = "CONVITE DE PARTY"        # modal no convidado: "<Lider> Level N convidou você..." -> ENTRAR
 INVITE_ACCEPT = ".pt-send.ti-confirm"
+PARTY_ADD = ".pt-add"                    # input "Nome do personagem" + .pt-send "Convidar" (convida SEM ser amigo)
+PARTY_SEND = ".pt-send"                  # "Criar party" / "Convidar"
+PARTY_LEAVE = ".pt-section .pt-decline"  # lider "DESFAZER PARTY" / membro "SAIR DA PARTY" (sem confirmacao)
+
+# tasks (chip Quadro de Tasks)
+TASKS_CHIP = 'button.gs-chip[aria-label="Quadro de Tasks"]'
+TASK_TAB = ".tb-tab"
+TASK_DAILY_TEXT = "TASKS DIÁRIAS"
+TASK_CARD = ".tb-card"                   # .tb-banner b = criatura, .tb-kills "3/183 abates", .tb-rewards .rw (img alt)
+TASK_SELECT = ".tb-select"               # "Selecionar task" / "Em progresso" (disabled) / "COMPLETAR"
+TASK_DIFF = ".tb-diffbtn"                # INICIANTE / ADEPTO / EXPERIENTE / MESTRE (is-on; vale no proximo reroll)
+TASK_REROLL = ".tb-btn.primary"          # REROLAR (gasta 1 token, sem confirmacao)
+TASK_TRACKER_TOOL = '.gs-tool[aria-label="Rastreador de Tasks"]'

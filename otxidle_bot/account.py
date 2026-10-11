@@ -5,6 +5,7 @@ import time
 from dataclasses import dataclass, field
 
 from . import selectors as S
+from . import tasks as T
 
 READ_JS = r"""() => {
   const q = s => document.querySelector(s);
@@ -22,6 +23,7 @@ READ_JS = r"""() => {
     hunting: vis(hb), hunt_name: (q('section.hb-panel .gs-panelhead p')?.innerText || '').trim(), hunt_buttons: hbButtons,
     training: vis(q('section.ta')), city: vis(q('button.gs-cta.gs-cta-play')),
     party: q('.gs-chip.gs-party')?.getAttribute('aria-label') || '',
+    tracker: [...document.querySelectorAll('section.ht-panel')].map(s => (s.getAttribute('aria-label') || '') + ' | ' + s.innerText).join(' || '),
     modals: modals, url: location.pathname,
   };
 }"""
@@ -64,6 +66,8 @@ class State:
     stamina_train: int = None
     party_size: int = 0
     invite_from: str = ""           # nome de quem convidou (modal CONVITE DE PARTY aberto)
+    task: tuple = None              # rastreador de tasks na tela: (criatura, abates, precisa)
+    tracker_shown: bool = False     # o painel 'Rastreador de Tasks' esta visivel
     modals: list = field(default_factory=list)
 
     @property
@@ -85,6 +89,11 @@ def build_state(raw, cap_max=None):
         st.phase = "training"
     elif raw.get("city"):
         st.phase = "city"
+    tracker = raw.get("tracker") or ""
+    for part in tracker.split(" || "):
+        if part.startswith("Rastreador de Tasks"):
+            st.tracker_shown = True
+            st.task = T.parse_tracker(part)
     for text in st.modals:
         if text.startswith(S.INVITE_TITLE):
             m = re.search(r"\n\s*(.+?)\s+Level\s+\d+\s+convidou", text)
@@ -302,3 +311,106 @@ class Account:
         self._click(self.page.locator(S.MODAL + " " + S.INVITE_ACCEPT).last)
         time.sleep(1)
         self.log(f"{self.name}: entrou na party")
+
+    # --------------------------------------------------------------- tasks
+    BOARD_JS = r"""() => { const m = [...document.querySelectorAll('.gm-modal')].pop(); if (!m) return null;
+      return { difficulty: (m.querySelector('.tb-diffbtn.is-on')?.innerText || '').trim(),
+        cards: [...m.querySelectorAll('.tb-card')].map(c => ({ creature: (c.querySelector('.tb-banner b')?.textContent || '').trim(),
+          kills: (c.querySelector('.tb-kills')?.innerText || '').trim(),
+          rewards: Object.fromEntries([...c.querySelectorAll('.tb-rewards .rw')].map(r => [r.querySelector('img')?.alt || '', r.innerText.trim()])),
+          button: (c.querySelector('.tb-select')?.innerText || '').trim() })),
+        footer: m.innerText.split(String.fromCharCode(10)).slice(-6).join(' | ') }; }"""
+
+    def open_board(self):
+        """Quadro de Tasks -> aba TASKS DIÁRIAS (abre caçando ou na cidade). Retorna o Board."""
+        self.close_modals()
+        self._click(self.page.locator(S.TASKS_CHIP))
+        tab = self.page.locator(S.MODAL + " " + S.TASK_TAB, has_text=S.TASK_DAILY_TEXT).first
+        tab.wait_for(timeout=6000)
+        self._click(tab)
+        self.page.locator(S.MODAL + " " + S.TASK_CARD).first.wait_for(timeout=6000)
+        time.sleep(0.4)
+        return T.parse_board(self.page.evaluate(self.BOARD_JS) or {})
+
+    def read_board(self):
+        try:
+            return self.open_board()
+        finally:
+            self.close_modals()
+
+    def _card_button(self, creature):
+        card = self.page.locator(S.MODAL + " " + S.TASK_CARD).filter(
+            has=self.page.locator(".tb-banner b", has_text=re.compile(r"^\s*" + re.escape(creature) + r"\s*$", re.I)))
+        return card.first.locator(S.TASK_SELECT)
+
+    def complete_task(self, creature):
+        """Card cheio mostra COMPLETAR: entrega na hora (XP, bounty, +1 token e 3 cartas novas). Board ja aberto."""
+        self._click(self._card_button(creature))
+        time.sleep(1)
+        self.log(f"{self.name}: entregou a task {creature}")
+        return T.parse_board(self.page.evaluate(self.BOARD_JS) or {})
+
+    def reroll(self, difficulty):
+        """Marca a dificuldade e REROLA (gasta 1 token, 3 cartas novas dela). Board ja aberto."""
+        diff = self.page.locator(S.MODAL + " " + S.TASK_DIFF, has_text=difficulty.upper()).first
+        if diff.is_disabled():
+            raise GameError(f"dificuldade {difficulty} bloqueada")
+        self._click(diff)
+        time.sleep(0.4)
+        self._click(self.page.locator(S.MODAL + " " + S.TASK_REROLL).first)
+        time.sleep(1)
+        board = T.parse_board(self.page.evaluate(self.BOARD_JS) or {})
+        self.log(f"{self.name}: rerolou as tasks ({difficulty}): {', '.join(c.creature for c in board.cards)}")
+        return board
+
+    def select_task(self, creature):
+        self._click(self._card_button(creature))
+        time.sleep(0.8)
+        self.log(f"{self.name}: pegou a task {creature}")
+
+    def show_task_tracker(self):
+        """Mostra o 'Rastreador de Tasks' na caça (alterna com o de Bestiary/Prey) pra ler o progresso sem abrir janela."""
+        tool = self.page.locator(S.TASK_TRACKER_TOOL)
+        if tool.count():
+            tool.first.dispatch_event("click")
+            time.sleep(0.5)
+
+    # -------------------------------------------------- party pelo nome
+    def read_party(self):
+        """{'members': [nomes], 'leader': bool (esta conta lidera), 'count'}. Abre e fecha a janela Amigos."""
+        try:
+            info = self.open_friends()
+            info["leader"] = "Líder (você)" in (info.get("text") or "")
+            return info
+        finally:
+            self.close_modals()
+
+    def leave_party(self):
+        """Lider: DESFAZER PARTY; membro: SAIR DA PARTY (os dois sem confirmacao; so' na cidade/fora da caça)."""
+        self.open_friends()
+        try:
+            button = self.page.locator(S.MODAL + " " + S.PARTY_LEAVE)
+            if button.count():
+                self._click(button.first)
+                time.sleep(0.8)
+                self.log(f"{self.name}: saiu da party")
+        finally:
+            self.close_modals()
+
+    def invite_by_name(self, names):
+        """Cria a party se precisar e convida pelo campo 'Nome do personagem' (funciona sem ser amigo)."""
+        self.open_friends()
+        try:
+            create = self.page.locator(S.MODAL + " " + S.PARTY_SEND, has_text=S.PARTY_CREATE_TEXT)
+            if create.count():
+                self._click(create.first)
+                time.sleep(0.8)
+            for name in names:
+                field = self.page.locator(S.MODAL + " " + S.PARTY_ADD + " input")
+                field.fill(name)
+                time.sleep(0.3)
+                self._click(self.page.locator(S.MODAL + " " + S.PARTY_ADD + " " + S.PARTY_SEND).first)
+                time.sleep(0.6)
+                self.log(f"{self.name}: convidou {name} pra party")
+        finally:
+            self.close_modals()
