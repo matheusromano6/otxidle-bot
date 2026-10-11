@@ -54,6 +54,10 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - Regras do usuario (11/10): caça da task SOZINHO so' com level recomendado <= level; JUNTO com outra conta (2/3 de level)
   aceita ate +5 (`tasks.group_level_over`). Nenhuma carta junta e ha outras contas em task -> REROLA (ate max_rerolls)
   tentando juntar; senao pega a de mais XP/abate sozinho. Contagem do dia comeca do zero quando o bot liga.
+- VALIDADO ao vivo 18:06 (v2): Kina entregou Orc e pegou Orc Warrior (Orc Camp, junto); Sorc entregou, rerolou 2x e
+  achou Orc Warrior (junto) -> Kina+Pally+Sorc continuaram no Orc Camp; ciclo de capacidade no meio funcionou.
+- Na cidade NAO ha rastreador: task trocada na mao na cidade passava despercebida (Druid mandado pro Spider Nest com task
+  Valkyrie). Agora relê o quadro 1x a cada ida a cidade/treino (`Engine.city_board`).
 - Ainda NAO visto ao vivo com o bot: entrega automatica + reroll + reagrupar; fase de party; virada do dia; "COLETAR DIÁRIO".
 - memory.json: `tasks` {day, accounts{nome: done, creature, hunt, stuck, checked, tracker_tried}}, `training` [nomes].
 

@@ -371,6 +371,19 @@ class EngineTasksTest(unittest.TestCase):
         # cartas da entrega (Rat/Troll/Cave Rat) nao juntam com o Pally -> rerola -> Orc Warrior no Orc Camp
         self.assertEqual(kina.actions[:4], ["board", "complete:Orc", "reroll:Adepto", "select:Orc Warrior"])
 
+    def test_task_changed_by_hand_in_city_is_seen(self):
+        w = World()
+        acc = FakeAccount(w, "Druid", phase="city", level=10, board=board("Troll", 0, 94))
+        acc.state.task = None                               # na cidade nao ha rastreador
+        acc.read = lambda: acc.state
+        cfg = make_cfg(tasks=True, idle_city_seconds=0)
+        eng = engine_for(w, cfg)
+        from otxidle_bot.engine import task_day
+        eng.memory.set_task(task_day(cfg), "Druid", {"checked": True, "creature": "Orc", "hunt": "Orc Camp"})
+        eng.tick()
+        self.assertEqual(acc.actions[0], "board")
+        self.assertIn("hunt:Troll Hills", acc.actions)
+
     def test_new_task_elsewhere_regroups(self):
         w = World()
         kina = FakeAccount(w, "Kina", level=13, hunt="Orc Camp", board=board("Orc", 10, 183))

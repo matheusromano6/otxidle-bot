@@ -111,6 +111,7 @@ class Engine:
         self.cap_floor = {}           # conta -> % de capacidade logo depois de vender
         self.mismatch = {}            # grupo -> vezes seguidas com party/caça diferente do plano
         self.expected_leader = {}     # conta -> lider do grupo dela (aceita convite so' dele)
+        self.city_board = set()       # contas que ja releram o quadro nesta ida a cidade/treino
         self._warned = set()
 
     # ---------------------------------------------------------------- loop
@@ -248,6 +249,11 @@ class Engine:
                 need = True                                  # trocaram a task na mao
         elif st.phase == "city" and not info.get("hunt") and not self._day_done(info):
             need = True                                      # sem task e ainda falta cota
+        if st.phase == "hunting":
+            self.city_board.discard(acc.name)
+        elif acc.name not in self.city_board:
+            need = True                                      # na cidade nao ha rastreador: relê o quadro 1x por visita
+            self.city_board.add(acc.name)
         if not need:
             return
         board = acc.open_board()
