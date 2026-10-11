@@ -120,3 +120,38 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   validado: lider sai -> CADA conta vende (VENDER -> SELECIONAR TUDO -> VENDER -> confirmar) -> lider reinicia a caça -> todos
   entram juntos. Venda com 0 itens: o modal abre e o VENDER fica disabled (o bot deve so fechar com Escape).
   Membros solo antes de entrar na party chegaram cheios (Pally/Sorc CAP 7/0): vender todos antes de reiniciar.
+
+## Tasks - levantamento (11/10/2026, so leitura nas 4 contas)
+- Ajuda do quadro: "Escolha uma dificuldade e depois rerole: o token compra três cartas da dificuldade escolhida. Tasks mais
+  difíceis pedem menos abates e pagam mais bounty points." -> a dificuldade (`.tb-diffbtn`) so vale no proximo REROLAR (gasta 1 token).
+- Card `.tb-card`: `.tb-banner b` = criatura, `.tb-kills` "53/95 abates", `.tb-progress i` (width %), `.tb-rewards .rw`
+  (img alt "XP" / "Bounty points" / "Token de reroll"), `.tb-select` ("Selecionar task" / "Em progresso" disabled), Abandonar.
+  So 1 task em progresso por vez. Cada task da +1 token de reroll. Iniciante ~3 bounty pts, Adepto ~7 (Pally: Orc 96 kills 840xp 7pts,
+  Orc Warrior 118 kills 2065xp, Skeleton 117 kills 1433xp).
+- Bounty talisman: niveis custam 5, 17, 29, 41, 53... pontos (permanente por personagem): dano, life leech, mais loot, bestiary x2.
+- A task conta abates fora do quadro: a Kina trocou Spider por Frost Troll e caçando em party Folda Icefields fez 61/78.
+  Usuario: abates de task contam pra todos da party (quem tem a mesma criatura).
+- Enciclopedia > Bestiary > criatura NAO diz onde ela aparece (so HP, XP, progresso, dano, drops). Mapa criatura->caça vem do
+  detalhe de cada caça (`.gm-panel` CRIATURAS), so na cidade.
+- Paw and Fur: "cada tarefa é uma criatura para vencer, uma vez ... uma criatura já paga nunca volta a aparecer" (nao e' diario).
+  CONCLUÍDAS 0/10. Lista `.pw-row` (Crocodile 300 abates 800xp/160/1; Badger 300 500/100/1; Tarantula 300 1500/300/2;
+  Carniphila 150 2500/500/3; Stone Golem 200 2000/400/3; Mammoth 300 4000/800/3; Terramite 300 2500/500/2;
+  Thornback Tortoise 300 1500/300/2; Gargoyle 200 1500/300/2) - colunas: abates, XP, ouro?, pontos de rank.
+
+## Tasks - entrega e reroll (testado ao vivo com MR Kina, 11/10/2026)
+- Task completa: o card mostra `.tb-select` "COMPLETAR" (habilitado) -> clicar entrega na hora (sem confirmacao/toast; da pra
+  entregar CAÇANDO). Kina Frost Troll 78/78: XP 77.9% -> 89.8%, bounty 3 -> 6, tokens 1 -> 2, e vieram 3 cartas NOVAS de graça
+  na dificuldade atual (Iniciante). "COLETAR DIÁRIO" continuou disabled (ainda nao sei o que libera).
+- Dificuldade: clicar `.tb-diffbtn` "ADEPTO" (os cards ganham etiqueta INICIANTE) -> `.tb-btn.primary` REROLAR (gasta 1 token,
+  sem confirmacao) -> 3 cartas Adepto (Emerald Damselfly 95/1164xp, Orc 183/1601xp, Swampling 178/2804xp; todas 7 pts).
+- Selecionar: `.tb-card:has(.tb-banner b:text-is('Orc')) .tb-select` -> vira "EM PROGRESSO" (sem confirmacao).
+- Rastreador na caça (`section.ht-panel[aria-label="Rastreador de Tasks"]`): "Orc · 7 pts | 3/183"; alterna com
+  `.gs-tool[aria-label="Rastreador de Tasks"]`.
+- VALIDADO: party Kina (task Orc) + Pally (task Orc Warrior) em Orc Camp -> cada um sobe a sua (criaturas diferentes, mesma caça).
+- Membro sai da party: chip Amigos -> `.pt-decline` "SAIR DA PARTY" (sem confirmacao). Lider fica "Party: 2 de 4".
+- Lista de amigos e' por conta: o Druid so tem a Kina como amiga (os pedidos foram todos com a lider).
+
+## Mapa de caças (`otxidle_bot/data/hunts.json`, lido em 11/10/2026)
+- 158 caças: name, rec_level, min_level, where, creatures (do detalhe `.gm-panel` -> `.gm-creature`). Lido pela JOGAR->HUNTS
+  (so na cidade) paginando `‹ 1/11 ›`; clicar os cards com dispatch_event (a gaveta cobre a lista).
+- Ex.: Orc Camp (8/1) Orc+Orc Warrior; Marsh Stalkers (15/12) Emerald Damselfly+Swampling+...; Folda Icefields (12/10) Frost Troll+Badger+...

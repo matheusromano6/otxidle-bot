@@ -1,0 +1,1606 @@
+[
+ {
+  "name": "Rat Cellars",
+  "rec_level": 1,
+  "min_level": 1,
+  "where": "Rookgaard, under the town",
+  "creatures": [
+   "Rat",
+   "Cave Rat"
+  ]
+ },
+ {
+  "name": "Bone Crypt",
+  "rec_level": 5,
+  "min_level": 1,
+  "where": "Ab'Dendriel, the bone crypt",
+  "creatures": [
+   "Skeleton",
+   "Ghoul"
+  ]
+ },
+ {
+  "name": "Spider Nest",
+  "rec_level": 6,
+  "min_level": 1,
+  "where": "Outside Thais, the spider woods",
+  "creatures": [
+   "Spider",
+   "Poison Spider"
+  ]
+ },
+ {
+  "name": "Troll Hills",
+  "rec_level": 6,
+  "min_level": 1,
+  "where": "North of Thais, the troll caves",
+  "creatures": [
+   "Troll"
+  ]
+ },
+ {
+  "name": "Orc Camp",
+  "rec_level": 8,
+  "min_level": 1,
+  "where": "Under Thais, the orc camp",
+  "creatures": [
+   "Orc",
+   "Orc Warrior"
+  ]
+ },
+ {
+  "name": "Rotworm Caves",
+  "rec_level": 8,
+  "min_level": 1,
+  "where": "Carlin, the rotworm caves",
+  "creatures": [
+   "Rotworm"
+  ]
+ },
+ {
+  "name": "Swamp Troll Cave",
+  "rec_level": 8,
+  "min_level": 1,
+  "where": "Tiquanda, the sunken cave",
+  "creatures": [
+   "Swamp Troll"
+  ]
+ },
+ {
+  "name": "Crab Beach",
+  "rec_level": 10,
+  "min_level": 8,
+  "where": "Thais coastline",
+  "creatures": [
+   "Crab"
+  ]
+ },
+ {
+  "name": "Crocodiles",
+  "rec_level": 10,
+  "min_level": 8,
+  "where": "Port Hope river",
+  "creatures": [
+   "Crocodile"
+  ]
+ },
+ {
+  "name": "Amazon Camp",
+  "rec_level": 12,
+  "min_level": 10,
+  "where": "Amazon Camp, Venore",
+  "creatures": [
+   "Amazon",
+   "Valkyrie"
+  ]
+ },
+ {
+  "name": "Folda Icefields",
+  "rec_level": 12,
+  "min_level": 10,
+  "where": "Folda, the icefields",
+  "creatures": [
+   "Frost Troll",
+   "Winter Wolf",
+   "Badger"
+  ]
+ },
+ {
+  "name": "Marsh Stalkers",
+  "rec_level": 15,
+  "min_level": 12,
+  "where": "Venore swamp",
+  "creatures": [
+   "Marsh Stalker",
+   "Emerald Damselfly",
+   "Swampling"
+  ]
+ },
+ {
+  "name": "Elf Quarter",
+  "rec_level": 16,
+  "min_level": 13,
+  "where": "Ab'Dendriel, the elf quarter",
+  "creatures": [
+   "Elf",
+   "Elf Scout"
+  ]
+ },
+ {
+  "name": "Minotaur Maze",
+  "rec_level": 16,
+  "min_level": 13,
+  "where": "Under Darashia, the maze",
+  "creatures": [
+   "Minotaur"
+  ]
+ },
+ {
+  "name": "Barbarian Camp",
+  "rec_level": 19,
+  "min_level": 15,
+  "where": "Svargrond camps",
+  "creatures": [
+   "Barbarian Headsplitter",
+   "Barbarian Skullhunter"
+  ]
+ },
+ {
+  "name": "Daramian Minotaur Pyramid",
+  "rec_level": 20,
+  "min_level": 16,
+  "where": "Darashia pyramid",
+  "creatures": [
+   "Minotaur Mage",
+   "Minotaur",
+   "Minotaur Archer"
+  ]
+ },
+ {
+  "name": "Mistrock Cyclopes",
+  "rec_level": 20,
+  "min_level": 16,
+  "where": "Mistrock, Edron",
+  "creatures": [
+   "Cyclops"
+  ]
+ },
+ {
+  "name": "Tiquanda Tarantula Cave",
+  "rec_level": 20,
+  "min_level": 16,
+  "where": "Port Hope spider cave",
+  "creatures": [
+   "Tarantula"
+  ]
+ },
+ {
+  "name": "Tomb Floor II",
+  "rec_level": 20,
+  "min_level": 16,
+  "where": "Ankrahmun tombs, -1",
+  "creatures": [
+   "Ghoul",
+   "Skeleton",
+   "Crypt Shambler",
+   "Mummy"
+  ]
+ },
+ {
+  "name": "Ankrahmun Nomads",
+  "rec_level": 22,
+  "min_level": 18,
+  "where": "Darama desert",
+  "creatures": [
+   "Nomad",
+   "Scorpion"
+  ]
+ },
+ {
+  "name": "Shadowthorn",
+  "rec_level": 22,
+  "min_level": 18,
+  "where": "Shadowthorn, the deep warren",
+  "creatures": [
+   "Elf Arcanist",
+   "Elf"
+  ]
+ },
+ {
+  "name": "Gloom Wolves",
+  "rec_level": 25,
+  "min_level": 20,
+  "where": "Killmaresh moors",
+  "creatures": [
+   "Gloom Wolf",
+   "Ghost Wolf"
+  ]
+ },
+ {
+  "name": "Stone Golems",
+  "rec_level": 25,
+  "min_level": 20,
+  "where": "Stonerefiner cave",
+  "creatures": [
+   "Stone Golem"
+  ]
+ },
+ {
+  "name": "Gargoyle Sanctuary",
+  "rec_level": 27,
+  "min_level": 22,
+  "where": "Yalahar sanctuary",
+  "creatures": [
+   "Gargoyle"
+  ]
+ },
+ {
+  "name": "Rorcs",
+  "rec_level": 29,
+  "min_level": 23,
+  "where": "Darashia cliffs",
+  "creatures": [
+   "Rorc"
+  ]
+ },
+ {
+  "name": "Corym Caves",
+  "rec_level": 30,
+  "min_level": 24,
+  "where": "Corym caves, Port Hope",
+  "creatures": [
+   "Corym Skirmisher"
+  ]
+ },
+ {
+  "name": "Dwarf Mines",
+  "rec_level": 30,
+  "min_level": 24,
+  "where": "Kazordoon, the deep mines",
+  "creatures": [
+   "Dwarf Guard",
+   "Dwarf Soldier",
+   "Dwarf Geomancer"
+  ]
+ },
+ {
+  "name": "Carniphila Grove",
+  "rec_level": 32,
+  "min_level": 26,
+  "where": "Tiquanda",
+  "creatures": [
+   "Carniphila"
+  ]
+ },
+ {
+  "name": "Frost Giants",
+  "rec_level": 32,
+  "min_level": 26,
+  "where": "Hrodmir barbarians",
+  "creatures": [
+   "Frost Giant",
+   "Frost Giantess"
+  ]
+ },
+ {
+  "name": "Tomb Floor III",
+  "rec_level": 32,
+  "min_level": 26,
+  "where": "Ankrahmun tombs, -3",
+  "creatures": [
+   "Mummy",
+   "Ghost",
+   "Ghoul"
+  ]
+ },
+ {
+  "name": "Ape City",
+  "rec_level": 33,
+  "min_level": 26,
+  "where": "Banuta",
+  "creatures": [
+   "Kongra",
+   "Sibang",
+   "Merlkin"
+  ]
+ },
+ {
+  "name": "Mammoth Grounds",
+  "rec_level": 33,
+  "min_level": 26,
+  "where": "Svargrond tundra",
+  "creatures": [
+   "Mammoth",
+   "Polar Bear",
+   "Winter Wolf"
+  ]
+ },
+ {
+  "name": "Terramites",
+  "rec_level": 34,
+  "min_level": 27,
+  "where": "Darama, Kha'zeel",
+  "creatures": [
+   "Terramite"
+  ]
+ },
+ {
+  "name": "Zombie Cave",
+  "rec_level": 34,
+  "min_level": 27,
+  "where": "Treasure Island",
+  "creatures": [
+   "Zombie"
+  ]
+ },
+ {
+  "name": "Laguna Blood Crabs",
+  "rec_level": 35,
+  "min_level": 28,
+  "where": "Laguna Islands, the crab caves",
+  "creatures": [
+   "Blood Crab",
+   "Thornback Tortoise",
+   "Tortoise"
+  ]
+ },
+ {
+  "name": "Scarab Desert",
+  "rec_level": 35,
+  "min_level": 28,
+  "where": "Darashia desert",
+  "creatures": [
+   "Scarab",
+   "Larva"
+  ]
+ },
+ {
+  "name": "Yalahar Pirates",
+  "rec_level": 35,
+  "min_level": 28,
+  "where": "Yalahar pirates",
+  "creatures": [
+   "Pirate Buccaneer",
+   "Pirate Marauder"
+  ]
+ },
+ {
+  "name": "Cyclopolis",
+  "rec_level": 38,
+  "min_level": 30,
+  "where": "Cyclopolis, Edron",
+  "creatures": [
+   "Cyclops Smith",
+   "Cyclops",
+   "Cyclops Drone"
+  ]
+ },
+ {
+  "name": "Old Fortress",
+  "rec_level": 40,
+  "min_level": 32,
+  "where": "Old Fortress, Thais",
+  "creatures": [
+   "Elder Bonelord",
+   "Bonelord"
+  ]
+ },
+ {
+  "name": "Stonerefiner Cave",
+  "rec_level": 40,
+  "min_level": 32,
+  "where": "Zao, the caves under Farmine",
+  "creatures": [
+   "Stonerefiner"
+  ]
+ },
+ {
+  "name": "Plains of Havoc",
+  "rec_level": 48,
+  "min_level": 38,
+  "where": "Plains of Havoc",
+  "creatures": [
+   "Demon Skeleton",
+   "Necromancer",
+   "Ghoul"
+  ]
+ },
+ {
+  "name": "Bonebeast Cave",
+  "rec_level": 50,
+  "min_level": 40,
+  "where": "Old Fortress, -1",
+  "creatures": [
+   "Bonebeast",
+   "Demon Skeleton",
+   "Crypt Shambler"
+  ]
+ },
+ {
+  "name": "Darashia Dragon Lair",
+  "rec_level": 50,
+  "min_level": 40,
+  "where": "Darashia Dragon Lair",
+  "creatures": [
+   "Dragon"
+  ]
+ },
+ {
+  "name": "Forest Fury",
+  "rec_level": 50,
+  "min_level": 40,
+  "where": "Feyrist",
+  "creatures": [
+   "Forest Fury",
+   "Haunted Treeling",
+   "Dryad"
+  ]
+ },
+ {
+  "name": "Mother of Scarabs Lair",
+  "rec_level": 50,
+  "min_level": 40,
+  "where": "Mother of Scarabs Lair, -3",
+  "creatures": [
+   "Ancient Scarab",
+   "Scarab",
+   "Bonebeast"
+  ]
+ },
+ {
+  "name": "Vengoth Woods",
+  "rec_level": 50,
+  "min_level": 40,
+  "where": "Vengoth",
+  "creatures": [
+   "Haunted Treeling",
+   "Slime"
+  ]
+ },
+ {
+  "name": "Gnomegate Crystal Dungeon",
+  "rec_level": 52,
+  "min_level": 42,
+  "where": "Gnomprona crystal dungeon",
+  "creatures": [
+   "Enraged Crystal Golem"
+  ]
+ },
+ {
+  "name": "Mutated Rats",
+  "rec_level": 53,
+  "min_level": 42,
+  "where": "Yalahar sewers",
+  "creatures": [
+   "Mutated Rat",
+   "Earth Elemental",
+   "Clay Guardian"
+  ]
+ },
+ {
+  "name": "Crystal Spiders",
+  "rec_level": 55,
+  "min_level": 44,
+  "where": "Nibelor",
+  "creatures": [
+   "Crystal Spider"
+  ]
+ },
+ {
+  "name": "Dark Cathedral",
+  "rec_level": 55,
+  "min_level": 44,
+  "where": "The dark cathedral",
+  "creatures": [
+   "Adept of the Cult",
+   "Acolyte of the Cult",
+   "Witch",
+   "Enlightened of the Cult"
+  ]
+ },
+ {
+  "name": "Drefia Vampires",
+  "rec_level": 55,
+  "min_level": 44,
+  "where": "Edron vampire crypt",
+  "creatures": [
+   "Vampire",
+   "Stalker",
+   "Ghost"
+  ]
+ },
+ {
+  "name": "Wyvern Hills",
+  "rec_level": 56,
+  "min_level": 45,
+  "where": "Thais wyvern hills",
+  "creatures": [
+   "Wyvern"
+  ]
+ },
+ {
+  "name": "Drefia Necromancers",
+  "rec_level": 60,
+  "min_level": 48,
+  "where": "Drefia necromancers",
+  "creatures": [
+   "Necromancer",
+   "Priestess"
+  ]
+ },
+ {
+  "name": "Giant Spider Cave",
+  "rec_level": 60,
+  "min_level": 48,
+  "where": "Fibula / Spider Cave",
+  "creatures": [
+   "Giant Spider"
+  ]
+ },
+ {
+  "name": "Krailos Steppe",
+  "rec_level": 60,
+  "min_level": 48,
+  "where": "Krailos Steppe",
+  "creatures": [
+   "Ogre Brute",
+   "Clomp",
+   "Ogre Savage"
+  ]
+ },
+ {
+  "name": "Sunken Quarter",
+  "rec_level": 60,
+  "min_level": 48,
+  "where": "Yalahar sunken quarter",
+  "creatures": [
+   "Water Elemental"
+  ]
+ },
+ {
+  "name": "Elder Mummies",
+  "rec_level": 61,
+  "min_level": 49,
+  "where": "Ankrahmun deep tombs",
+  "creatures": [
+   "Elder Mummy",
+   "Sandstone Scorpion",
+   "Death Priest"
+  ]
+ },
+ {
+  "name": "Roaring Lions",
+  "rec_level": 65,
+  "min_level": 52,
+  "where": "Oramond plains",
+  "creatures": [
+   "Roaring Lion"
+  ]
+ },
+ {
+  "name": "Vampire Viscount",
+  "rec_level": 65,
+  "min_level": 52,
+  "where": "Plains of Havoc",
+  "creatures": [
+   "Vampire Viscount",
+   "Vampire"
+  ]
+ },
+ {
+  "name": "Yalahar Mutated Beasts",
+  "rec_level": 69,
+  "min_level": 55,
+  "where": "Yalahar, the alchemist quarter",
+  "creatures": [
+   "Mutated Tiger"
+  ]
+ },
+ {
+  "name": "Bog Raiders",
+  "rec_level": 70,
+  "min_level": 56,
+  "where": "Oramond caves, -3",
+  "creatures": [
+   "Bog Raider"
+  ]
+ },
+ {
+  "name": "Darashia Dragon Lords",
+  "rec_level": 70,
+  "min_level": 56,
+  "where": "Darashia lair, the lord floor",
+  "creatures": [
+   "Dragon Lord"
+  ]
+ },
+ {
+  "name": "Frost Dragon Lair",
+  "rec_level": 70,
+  "min_level": 56,
+  "where": "Svargrond glacier",
+  "creatures": [
+   "Frost Dragon",
+   "Frost Dragon Hatchling"
+  ]
+ },
+ {
+  "name": "Wyrms",
+  "rec_level": 70,
+  "min_level": 56,
+  "where": "Liberty Bay, -1",
+  "creatures": [
+   "Wyrm"
+  ]
+ },
+ {
+  "name": "Orc Fortress",
+  "rec_level": 72,
+  "min_level": 58,
+  "where": "Ulderek's Rock",
+  "creatures": [
+   "Orc Warlord",
+   "Slime",
+   "Orc Berserker",
+   "Orc Shaman"
+  ]
+ },
+ {
+  "name": "Foreigner Quarter",
+  "rec_level": 75,
+  "min_level": 60,
+  "where": "Yalahar foreigner quarter",
+  "creatures": [
+   "Yielothax"
+  ]
+ },
+ {
+  "name": "Brimstone Bugs",
+  "rec_level": 78,
+  "min_level": 62,
+  "where": "Zao, the muggy plains",
+  "creatures": [
+   "Brimstone Bug",
+   "Wailing Widow",
+   "Lancer Beetle"
+  ]
+ },
+ {
+  "name": "Mooh'Tah Temple",
+  "rec_level": 78,
+  "min_level": 62,
+  "where": "Oramond, the Mooh'Tah temple",
+  "creatures": [
+   "Mooh'Tah Warrior",
+   "Worm Priestess"
+  ]
+ },
+ {
+  "name": "Braindeath Caves",
+  "rec_level": 80,
+  "min_level": 64,
+  "where": "Beneath Fenrock, Zao",
+  "creatures": [
+   "Braindeath",
+   "Banshee",
+   "Nightstalker"
+  ]
+ },
+ {
+  "name": "Hero Fortress",
+  "rec_level": 80,
+  "min_level": 64,
+  "where": "Edron Hero Cave",
+  "creatures": [
+   "Hero",
+   "Vicious Squire"
+  ]
+ },
+ {
+  "name": "Sea Serpents",
+  "rec_level": 80,
+  "min_level": 64,
+  "where": "Yalahar sunken quarter",
+  "creatures": [
+   "Sea Serpent",
+   "Young Sea Serpent"
+  ]
+ },
+ {
+  "name": "Feyrist Surface",
+  "rec_level": 81,
+  "min_level": 65,
+  "where": "Feyrist meadows",
+  "creatures": [
+   "Faun",
+   "Pixie"
+  ]
+ },
+ {
+  "name": "Insectoid Hive",
+  "rec_level": 82,
+  "min_level": 66,
+  "where": "Gnomprona hive outpost",
+  "creatures": [
+   "Crawler",
+   "Waspoid",
+   "Insectoid Worker"
+  ]
+ },
+ {
+  "name": "Killer Caimans",
+  "rec_level": 84,
+  "min_level": 67,
+  "where": "Laguna Islands",
+  "creatures": [
+   "Killer Caiman",
+   "Lizard Legionnaire"
+  ]
+ },
+ {
+  "name": "Ruins of Krailos",
+  "rec_level": 85,
+  "min_level": 68,
+  "where": "Krailos ruins",
+  "creatures": [
+   "Nightmare Scion",
+   "Undead Gladiator"
+  ]
+ },
+ {
+  "name": "Blood Beast Plains",
+  "rec_level": 88,
+  "min_level": 70,
+  "where": "Oramond southern plains",
+  "creatures": [
+   "Blood Beast",
+   "Mooh'Tah Warrior",
+   "Minotaur Hunter"
+  ]
+ },
+ {
+  "name": "Iks Camp",
+  "rec_level": 88,
+  "min_level": 70,
+  "where": "Iksupan, Marapur",
+  "creatures": [
+   "Iks Chuka",
+   "Iks Pututu",
+   "Iks Aucar"
+  ]
+ },
+ {
+  "name": "Putrid Mummies",
+  "rec_level": 89,
+  "min_level": 71,
+  "where": "Rathleton catacombs",
+  "creatures": [
+   "Putrid Mummy",
+   "Bonebeast",
+   "Giant Spider"
+  ]
+ },
+ {
+  "name": "Deepling Bay",
+  "rec_level": 90,
+  "min_level": 72,
+  "where": "Deepling Bay",
+  "creatures": [
+   "Deepling Guard",
+   "Shark"
+  ]
+ },
+ {
+  "name": "Dark Fauns",
+  "rec_level": 97,
+  "min_level": 78,
+  "where": "Feyrist woods",
+  "creatures": [
+   "Dark Faun",
+   "Twisted Pooka"
+  ]
+ },
+ {
+  "name": "Oramond Minotaurs",
+  "rec_level": 104,
+  "min_level": 83,
+  "where": "Oramond minotaur cults",
+  "creatures": [
+   "Minotaur Cult Zealot",
+   "Minotaur Cult Prophet",
+   "Minotaur Cult Follower"
+  ]
+ },
+ {
+  "name": "Zao Plantations",
+  "rec_level": 105,
+  "min_level": 84,
+  "where": "Zao steppe",
+  "creatures": [
+   "Lizard High Guard",
+   "Lizard Legionnaire"
+  ]
+ },
+ {
+  "name": "Banuta Serpent Spawns",
+  "rec_level": 110,
+  "min_level": 88,
+  "where": "Deeper Banuta",
+  "creatures": [
+   "Serpent Spawn",
+   "Eternal Guardian",
+   "Hydra"
+  ]
+ },
+ {
+  "name": "Grimvale",
+  "rec_level": 110,
+  "min_level": 88,
+  "where": "Grimvale",
+  "creatures": [
+   "Werewolf",
+   "Werebear",
+   "Wereboar"
+  ]
+ },
+ {
+  "name": "Hydras",
+  "rec_level": 110,
+  "min_level": 88,
+  "where": "Oramond / Port Hope",
+  "creatures": [
+   "Hydra"
+  ]
+ },
+ {
+  "name": "Exotic Cave",
+  "rec_level": 113,
+  "min_level": 90,
+  "where": "Port Hope exotic cave",
+  "creatures": [
+   "Exotic Bat",
+   "Exotic Cave Spider"
+  ]
+ },
+ {
+  "name": "Lizard City",
+  "rec_level": 115,
+  "min_level": 92,
+  "where": "Zzaion",
+  "creatures": [
+   "Lizard Chosen"
+  ]
+ },
+ {
+  "name": "Calassa Quaras",
+  "rec_level": 119,
+  "min_level": 95,
+  "where": "Calassa",
+  "creatures": [
+   "Quara Predator",
+   "Quara Hydromancer",
+   "Quara Pincher",
+   "Quara Mantassin"
+  ]
+ },
+ {
+  "name": "Elder Wyrms",
+  "rec_level": 125,
+  "min_level": 100,
+  "where": "Drefia elder wyrms",
+  "creatures": [
+   "Elder Wyrm",
+   "Wyrm"
+  ]
+ },
+ {
+  "name": "Draken Walls",
+  "rec_level": 130,
+  "min_level": 104,
+  "where": "Zao Palace",
+  "creatures": [
+   "Draken Abomination",
+   "Draken Warmaster",
+   "Draken Spellweaver"
+  ]
+ },
+ {
+  "name": "Medusa Tower",
+  "rec_level": 130,
+  "min_level": 104,
+  "where": "Medusa Tower, Port Hope",
+  "creatures": [
+   "Medusa"
+  ]
+ },
+ {
+  "name": "Asura Palace",
+  "rec_level": 136,
+  "min_level": 109,
+  "where": "Asura Palace",
+  "creatures": [
+   "Dawnfire Asura",
+   "Midnight Asura"
+  ]
+ },
+ {
+  "name": "Werehyaena Cave",
+  "rec_level": 140,
+  "min_level": 112,
+  "where": "Darashia werehyaenas",
+  "creatures": [
+   "Werehyaena",
+   "Werehyaena Shaman"
+  ]
+ },
+ {
+  "name": "Demona Warlocks",
+  "rec_level": 142,
+  "min_level": 114,
+  "where": "Demona, Isle of the Kings",
+  "creatures": [
+   "Warlock"
+  ]
+ },
+ {
+  "name": "Lower Roshamuul",
+  "rec_level": 150,
+  "min_level": 120,
+  "where": "Roshamuul",
+  "creatures": [
+   "Choking Fear",
+   "Retching Horror",
+   "Frazzlemaw"
+  ]
+ },
+ {
+  "name": "Gnomegate Fungus Dungeon",
+  "rec_level": 151,
+  "min_level": 121,
+  "where": "Gnomprona fungus dungeon",
+  "creatures": [
+   "Humongous Fungus"
+  ]
+ },
+ {
+  "name": "Behemoth Cave",
+  "rec_level": 155,
+  "min_level": 124,
+  "where": "Cyclopolis / Deeper Banuta",
+  "creatures": [
+   "Behemoth"
+  ]
+ },
+ {
+  "name": "Glooth Factory",
+  "rec_level": 155,
+  "min_level": 124,
+  "where": "Rathleton glooth factory",
+  "creatures": [
+   "Glooth Bandit",
+   "Glooth Brigand"
+  ]
+ },
+ {
+  "name": "Hellspawn Gardens",
+  "rec_level": 155,
+  "min_level": 124,
+  "where": "Asura Palace gardens",
+  "creatures": [
+   "Hellspawn",
+   "Midnight Asura"
+  ]
+ },
+ {
+  "name": "Glooth Tower",
+  "rec_level": 165,
+  "min_level": 132,
+  "where": "Rathleton glooth tower",
+  "creatures": [
+   "Metal Gargoyle",
+   "Glooth Golem"
+  ]
+ },
+ {
+  "name": "Seacrest Grounds",
+  "rec_level": 165,
+  "min_level": 132,
+  "where": "Seacrest grounds, Oramond",
+  "creatures": [
+   "Seacrest Serpent",
+   "Shark",
+   "Sea Serpent"
+  ]
+ },
+ {
+  "name": "Cave Devourer Warren",
+  "rec_level": 170,
+  "min_level": 136,
+  "where": "Warzone 5, Gnomprona",
+  "creatures": [
+   "Cave Devourer",
+   "Tunnel Tyrant"
+  ]
+ },
+ {
+  "name": "Draken Warmasters",
+  "rec_level": 170,
+  "min_level": 136,
+  "where": "Zzaion draken halls",
+  "creatures": [
+   "Draken Warmaster"
+  ]
+ },
+ {
+  "name": "Roshamuul Prison",
+  "rec_level": 170,
+  "min_level": 136,
+  "where": "Roshamuul prison",
+  "creatures": [
+   "Frazzlemaw",
+   "Silencer"
+  ]
+ },
+ {
+  "name": "Mino Mountain Hideout",
+  "rec_level": 175,
+  "min_level": 140,
+  "where": "Oramond minotaur cults",
+  "creatures": [
+   "Moohtant",
+   "Minotaur Amazon",
+   "Hellspawn"
+  ]
+ },
+ {
+  "name": "Ripper Spectres",
+  "rec_level": 178,
+  "min_level": 142,
+  "where": "Netherworld",
+  "creatures": [
+   "Ripper Spectre",
+   "Arachnophobica"
+  ]
+ },
+ {
+  "name": "Turtle Coast",
+  "rec_level": 178,
+  "min_level": 142,
+  "where": "Marapur coast",
+  "creatures": [
+   "Two-Headed Turtle",
+   "Foam Stalker"
+  ]
+ },
+ {
+  "name": "Roshamuul Surface",
+  "rec_level": 180,
+  "min_level": 144,
+  "where": "Roshamuul plains",
+  "creatures": [
+   "Retching Horror",
+   "Frazzlemaw",
+   "Silencer"
+  ]
+ },
+ {
+  "name": "Gazer Spectres",
+  "rec_level": 182,
+  "min_level": 146,
+  "where": "Netherworld",
+  "creatures": [
+   "Gazer Spectre"
+  ]
+ },
+ {
+  "name": "Makara Shoals",
+  "rec_level": 190,
+  "min_level": 152,
+  "where": "Marapur shoals",
+  "creatures": [
+   "Makara",
+   "Naga Warrior",
+   "Naga Archer"
+  ]
+ },
+ {
+  "name": "Naga Grounds",
+  "rec_level": 190,
+  "min_level": 152,
+  "where": "Marapur nagas",
+  "creatures": [
+   "Naga Warrior",
+   "Makara",
+   "Naga Archer"
+  ]
+ },
+ {
+  "name": "Yalahar Grim Reapers",
+  "rec_level": 190,
+  "min_level": 152,
+  "where": "Yalahar grim reapers",
+  "creatures": [
+   "Grim Reaper",
+   "Spectre",
+   "Banshee"
+  ]
+ },
+ {
+  "name": "Deep Desert",
+  "rec_level": 195,
+  "min_level": 156,
+  "where": "Marapur deep desert",
+  "creatures": [
+   "Cursed Prospector"
+  ]
+ },
+ {
+  "name": "Dread Intruders",
+  "rec_level": 196,
+  "min_level": 157,
+  "where": "Gnomprona lava tunnels",
+  "creatures": [
+   "Dread Intruder",
+   "Reality Reaver",
+   "Sparkion"
+  ]
+ },
+ {
+  "name": "Ghostlands",
+  "rec_level": 196,
+  "min_level": 157,
+  "where": "Ghostlands, Drefia",
+  "creatures": [
+   "Betrayed Wraith",
+   "Lost Soul"
+  ]
+ },
+ {
+  "name": "Reality Reavers",
+  "rec_level": 196,
+  "min_level": 157,
+  "where": "Gnomprona lava caves",
+  "creatures": [
+   "Reality Reaver",
+   "Sparkion",
+   "Dread Intruder",
+   "Breach Brood"
+  ]
+ },
+ {
+  "name": "Winter Court",
+  "rec_level": 196,
+  "min_level": 157,
+  "where": "Feyrist, Winter Court",
+  "creatures": [
+   "Crazed Winter Vanguard",
+   "Crazed Winter Rearguard"
+  ]
+ },
+ {
+  "name": "Diremaw Nest",
+  "rec_level": 200,
+  "min_level": 160,
+  "where": "Gnomprona hive tunnels",
+  "creatures": [
+   "Diremaw"
+  ]
+ },
+ {
+  "name": "Formorgar Mines",
+  "rec_level": 200,
+  "min_level": 160,
+  "where": "Formorgar mines",
+  "creatures": [
+   "Fury",
+   "Hellfire Fighter",
+   "Destroyer"
+  ]
+ },
+ {
+  "name": "Nightmare Isles",
+  "rec_level": 200,
+  "min_level": 160,
+  "where": "Roshamuul prison",
+  "creatures": [
+   "Guzzlemaw",
+   "Frazzlemaw",
+   "Silencer"
+  ]
+ },
+ {
+  "name": "Pits of Inferno",
+  "rec_level": 200,
+  "min_level": 160,
+  "where": "Pits of Inferno",
+  "creatures": [
+   "Diabolic Imp",
+   "Lich",
+   "Warlock"
+  ]
+ },
+ {
+  "name": "Dragolisks",
+  "rec_level": 204,
+  "min_level": 163,
+  "where": "Zao dragon halls",
+  "creatures": [
+   "Dragolisk"
+  ]
+ },
+ {
+  "name": "Arachnophobica Nest",
+  "rec_level": 206,
+  "min_level": 165,
+  "where": "Feyrist, Winter Court",
+  "creatures": [
+   "Arachnophobica",
+   "Soul-Broken Harbinger",
+   "Crazed Winter Rearguard"
+  ]
+ },
+ {
+  "name": "Burster Spectres",
+  "rec_level": 210,
+  "min_level": 168,
+  "where": "Netherworld",
+  "creatures": [
+   "Burster Spectre"
+  ]
+ },
+ {
+  "name": "Summer Court",
+  "rec_level": 210,
+  "min_level": 168,
+  "where": "Feyrist, Summer Court",
+  "creatures": [
+   "Crazed Summer Vanguard",
+   "Crazed Summer Rearguard",
+   "Insane Siren"
+  ]
+ },
+ {
+  "name": "Ironblights",
+  "rec_level": 212,
+  "min_level": 170,
+  "where": "Gnomprona ore tunnels",
+  "creatures": [
+   "Ironblight",
+   "Lost Berserker"
+  ]
+ },
+ {
+  "name": "Carnivora's Rock",
+  "rec_level": 215,
+  "min_level": 172,
+  "where": "Carnivora's Rock",
+  "creatures": [
+   "Menacing Carnivor"
+  ]
+ },
+ {
+  "name": "Hell Hub",
+  "rec_level": 215,
+  "min_level": 172,
+  "where": "Warzone / Hellgate",
+  "creatures": [
+   "Hellhound"
+  ]
+ },
+ {
+  "name": "Lost Souls",
+  "rec_level": 215,
+  "min_level": 172,
+  "where": "Marapur, the netherworld",
+  "creatures": [
+   "Mean Lost Soul",
+   "Flimsy Lost Soul"
+  ]
+ },
+ {
+  "name": "Haunted Dragons",
+  "rec_level": 216,
+  "min_level": 173,
+  "where": "Carlin cults",
+  "creatures": [
+   "Haunted Dragon"
+  ]
+ },
+ {
+  "name": "Stone Devourers",
+  "rec_level": 217,
+  "min_level": 174,
+  "where": "Gnomprona ore tunnels",
+  "creatures": [
+   "Stone Devourer",
+   "Humongous Fungus",
+   "Hideous Fungus"
+  ]
+ },
+ {
+  "name": "Deathling Choir",
+  "rec_level": 224,
+  "min_level": 179,
+  "where": "Marapur, the netherworld",
+  "creatures": [
+   "Deathling Spellsinger",
+   "Deathling Scout"
+  ]
+ },
+ {
+  "name": "Lost Berserkers",
+  "rec_level": 224,
+  "min_level": 179,
+  "where": "Gnomprona fungus dungeon",
+  "creatures": [
+   "Lost Berserker",
+   "Ironblight",
+   "Orewalker"
+  ]
+ },
+ {
+  "name": "Orewalkers",
+  "rec_level": 224,
+  "min_level": 179,
+  "where": "Gnomprona ore tunnels",
+  "creatures": [
+   "Orewalker",
+   "Ironblight",
+   "Lost Berserker"
+  ]
+ },
+ {
+  "name": "Thanatursus Woods",
+  "rec_level": 224,
+  "min_level": 179,
+  "where": "Feyrist, Summer Court",
+  "creatures": [
+   "Thanatursus",
+   "Arachnophobica",
+   "Crazed Winter Vanguard"
+  ]
+ },
+ {
+  "name": "Ghastly Dragon Lair",
+  "rec_level": 225,
+  "min_level": 180,
+  "where": "Zao dragon lair",
+  "creatures": [
+   "Ghastly Dragon",
+   "Draken Abomination",
+   "Undead Dragon"
+  ]
+ },
+ {
+  "name": "Terrorsleeps",
+  "rec_level": 236,
+  "min_level": 189,
+  "where": "Roshamuul plains",
+  "creatures": [
+   "Terrorsleep"
+  ]
+ },
+ {
+  "name": "Mega Dragons",
+  "rec_level": 238,
+  "min_level": 190,
+  "where": "Zzaion, the war halls",
+  "creatures": [
+   "Mega Dragon",
+   "Wardragon",
+   "Dragolisk"
+  ]
+ },
+ {
+  "name": "Wardragons",
+  "rec_level": 238,
+  "min_level": 190,
+  "where": "Zzaion, the war halls",
+  "creatures": [
+   "Wardragon",
+   "Dragolisk",
+   "Mega Dragon"
+  ]
+ },
+ {
+  "name": "Undead Dragon Lair",
+  "rec_level": 240,
+  "min_level": 192,
+  "where": "Vengoth / Zao",
+  "creatures": [
+   "Undead Dragon",
+   "Blightwalker"
+  ]
+ },
+ {
+  "name": "Demon Lair",
+  "rec_level": 243,
+  "min_level": 194,
+  "where": "Rathleton, the glooth tower",
+  "creatures": [
+   "Demon",
+   "Metal Gargoyle",
+   "Grim Reaper"
+  ]
+ },
+ {
+  "name": "Blightwalkers",
+  "rec_level": 244,
+  "min_level": 195,
+  "where": "Netherworld",
+  "creatures": [
+   "Blightwalker",
+   "Plaguesmith",
+   "Nightmare"
+  ]
+ },
+ {
+  "name": "Deeper Banuta",
+  "rec_level": 245,
+  "min_level": 196,
+  "where": "Deeper Banuta",
+  "creatures": [
+   "Dark Torturer",
+   "Vexclaw",
+   "Grimeleech"
+  ]
+ },
+ {
+  "name": "Goanna Grounds",
+  "rec_level": 245,
+  "min_level": 196,
+  "where": "Issavi outback",
+  "creatures": [
+   "Adult Goanna",
+   "Young Goanna"
+  ]
+ },
+ {
+  "name": "Werelion Cave",
+  "rec_level": 245,
+  "min_level": 196,
+  "where": "Werelion cave, Oramond",
+  "creatures": [
+   "Werelion",
+   "Werelioness"
+  ]
+ },
+ {
+  "name": "Asura Vaults",
+  "rec_level": 255,
+  "min_level": 204,
+  "where": "Asura Palace vaults",
+  "creatures": [
+   "True Dawnfire Asura",
+   "True Midnight Asura",
+   "True Frost Flower Asura"
+  ]
+ },
+ {
+  "name": "Blemished Spawn",
+  "rec_level": 258,
+  "min_level": 206,
+  "where": "Kilmaresh cliffs",
+  "creatures": [
+   "Blemished Spawn"
+  ]
+ },
+ {
+  "name": "Weepers",
+  "rec_level": 258,
+  "min_level": 206,
+  "where": "Gnomprona magma dungeon",
+  "creatures": [
+   "Weeper",
+   "Magma Crawler",
+   "Lava Golem"
+  ]
+ },
+ {
+  "name": "Crape Men",
+  "rec_level": 260,
+  "min_level": 208,
+  "where": "Roshamuul prison",
+  "creatures": [
+   "Crape Man",
+   "Harpy",
+   "Rhindeer"
+  ]
+ },
+ {
+  "name": "Carnivostrich Plains",
+  "rec_level": 261,
+  "min_level": 209,
+  "where": "Marapur savannah",
+  "creatures": [
+   "Carnivostrich",
+   "Boar Man",
+   "Liodile"
+  ]
+ },
+ {
+  "name": "Asura Mirror",
+  "rec_level": 265,
+  "min_level": 212,
+  "where": "Asura Mirror",
+  "creatures": [
+   "True Midnight Asura",
+   "Hellspawn",
+   "True Frost Flower Asura"
+  ]
+ },
+ {
+  "name": "Rustheap",
+  "rec_level": 270,
+  "min_level": 216,
+  "where": "Warzone 4",
+  "creatures": [
+   "Rustheap Golem",
+   "Glooth Golem",
+   "Walker"
+  ]
+ },
+ {
+  "name": "Burning Gladiators",
+  "rec_level": 275,
+  "min_level": 220,
+  "where": "Issavi arena",
+  "creatures": [
+   "Burning Gladiator",
+   "Black Sphinx Acolyte",
+   "Priestess of the Wild Sun"
+  ]
+ },
+ {
+  "name": "Secret Library (Fire)",
+  "rec_level": 280,
+  "min_level": 224,
+  "where": "Secret Library, fire section",
+  "creatures": [
+   "Burning Book",
+   "Rage Squid"
+  ]
+ },
+ {
+  "name": "Secret Library (Ice)",
+  "rec_level": 280,
+  "min_level": 224,
+  "where": "Secret Library, ice section",
+  "creatures": [
+   "Icecold Book",
+   "Animated Feather",
+   "Squid Warden"
+  ]
+ },
+ {
+  "name": "Evil Prospectors",
+  "rec_level": 286,
+  "min_level": 229,
+  "where": "Marapur deep desert",
+  "creatures": [
+   "Evil Prospector",
+   "Cursed Prospector"
+  ]
+ },
+ {
+  "name": "Secret Library (Energy)",
+  "rec_level": 290,
+  "min_level": 232,
+  "where": "Secret Library, energy wing",
+  "creatures": [
+   "Energetic Book",
+   "Knowledge Elemental",
+   "Brain Squid"
+  ]
+ },
+ {
+  "name": "Falcon Bastion",
+  "rec_level": 300,
+  "min_level": 240,
+  "where": "Falcon Bastion",
+  "creatures": [
+   "Falcon Knight",
+   "Falcon Paladin"
+  ]
+ }
+]
