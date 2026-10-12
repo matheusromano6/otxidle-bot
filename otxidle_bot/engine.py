@@ -417,6 +417,11 @@ class Engine:
             self.log(f"{acc.name}: nenhuma task boa e sem reroll - fica livre pelo resto do dia")
             return
 
+    def _all_trained(self):
+        """Todas as contas marcadas pra treinar ja recuperaram (as que nao estao treinando contam como prontas)."""
+        return all(training_done(a.state, self.cfg) for a in self.accounts
+                   if a.name and self.memory.training(a.name) and a.state.phase == "training")
+
     def _hunt_creatures(self, hunt):
         h = next((x for x in self.hunts if x["name"].casefold() == (hunt or "").casefold()), None)
         return {c.casefold() for c in h["creatures"]} if h else set()
@@ -530,6 +535,8 @@ class Engine:
                 acc.use_exercise_weapon()
             if not self.memory.training(acc.name):
                 return                      # treino que voce iniciou: o bot nao encerra
+            if self.party_first and not self._all_trained():
+                return                      # party: espera TODAS recuperarem pra voltar junto
             if training_done(st, self.cfg):
                 acc.end_training()
                 self.memory.set_training(acc.name, False)
@@ -570,7 +577,8 @@ class Engine:
             if trigger:
                 reason, detail, names = trigger
                 if reason == "stamina":
-                    for name in names:
+                    # party primeiro: treinam TODAS juntas (e voltam juntas) pra nao quebrar a party
+                    for name in (group.names if self.party_first and group.is_party else names):
                         self.memory.set_training(name, True)
                 self._leave(group, detail)
             return

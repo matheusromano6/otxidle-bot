@@ -523,6 +523,21 @@ class PartyFirstTest(unittest.TestCase):
         self.assertEqual(info["paw"], "Mummy")
 
 
+    def test_paw_first_then_most_accounts_then_fallback(self):
+        hunts = HUNTS + [TOMB, MINO]
+        accs = [{"name": "Kina", "daily": "Mummy", "paw": "Crocodile"}, {"name": "Pally", "daily": "Mummy", "paw": "Crocodile"},
+                {"name": "Druid", "daily": "Minotaur", "paw": "Crocodile"}, {"name": "Sorc", "daily": "Minotaur", "paw": "Crocodile"}]
+        croc = {"name": "Crocodiles", "rec_level": 10, "min_level": 8, "creatures": ["Crocodile"]}
+        hunts.append(croc)
+        self.assertEqual(T.best_hunt(hunts, accs, 29, 16)[0], "Crocodiles")              # Paw das 4 primeiro
+        for a in accs:
+            a["paw"] = None
+        accs[3]["daily"] = "Mummy"
+        self.assertEqual(T.best_hunt(hunts, accs, 29, 16)[0], "Tomb Floor II")           # 3 contas x 1
+        for a in accs:
+            a["daily"] = None
+        self.assertEqual(T.best_hunt(hunts, accs, 29, 16, fallback="Amazon Camp")[0], "Amazon Camp")   # caça padrao
+
     def test_group_picks_same_paw(self):
         w = World()
         kina = FakeAccount(w, "Kina", level=24, hunt="Tomb Floor II")

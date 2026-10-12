@@ -245,3 +245,10 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   carta/opcao de Paw disponivel 1; empate = mais forte; so troca se outra atender MAIS). Fora da party: solo seguro.
   Engine: _pick_for_hunt (so carta da caça do grupo; senao rerola; senao espera), _paw (entrega cheio, pega o da caça
   do grupo), revisao a cada 15 min e quando a caça do grupo muda. 'Caça da party' fixa ainda manda (voltei pra Automatica).
+
+## v2.2.0 - as 4 juntas (12/10/2026, decisao do usuario)
+- Prioridade: tasks que juntem as 4; senao a caça padrao da party pras 4 (nunca de 2 em 2 / separadas). Paw and Fur primeiro
+  (lista igual pras 4), depois as diarias. hunt_score = (contas com task la', pontos): Paw ativo 10, diaria 3, carta/opcao 1.
+  'Caça da party' virou a caça PADRAO (fallback quando nenhuma caça tem task); vazia = a mais forte que o grupo aguenta.
+- Treino SINCRONIZADO: stamina de uma -> as 4 treinam; voltam juntas quando todas recuperarem (Engine._all_trained).
+- Atencao: Kina 24 x Pally 16 no limite dos 2/3 (16*3=48 >= 24*2); Kina no 25 tira o Pally.
