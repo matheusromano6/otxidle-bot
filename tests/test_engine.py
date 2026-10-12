@@ -538,6 +538,14 @@ class PartyFirstTest(unittest.TestCase):
             a["daily"] = None
         self.assertEqual(T.best_hunt(hunts, accs, 29, 16, fallback="Amazon Camp")[0], "Amazon Camp")   # caça padrao
 
+    def test_paw_check_interval_by_rate(self):
+        every = Engine._paw_check_every
+        self.assertEqual(every({}), 900)
+        self.assertEqual(every({"paw_kills": [100, 300], "paw_rate": 0}), 300)
+        self.assertEqual(every({"paw_kills": [290, 300], "paw_rate": 0.1}), 120)      # quase: le logo
+        self.assertEqual(every({"paw_kills": [0, 300], "paw_rate": 0.05}), 900)       # longe: 15 min
+        self.assertEqual(every({"paw_kills": [300, 300]}), 60)
+
     def test_group_picks_same_paw(self):
         w = World()
         kina = FakeAccount(w, "Kina", level=24, hunt="Tomb Floor II")

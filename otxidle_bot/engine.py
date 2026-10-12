@@ -351,7 +351,7 @@ class Engine:
         if self.party_first:
             if target and info.get("target") != target:
                 need = True                                  # caça do grupo mudou: tasks/Paw da caça nova
-            if time.time() - info.get("checked_at", 0) > 900:
+            if time.time() - info.get("checked_at", 0) > self._paw_check_every(info):
                 need = True                                  # revisa (Paw and Fur nao tem rastreador)
         if not need:
             return
@@ -417,6 +417,21 @@ class Engine:
             self.log(f"{acc.name}: nenhuma task boa e sem reroll - fica livre pelo resto do dia")
             return
 
+    @staticmethod
+    def _paw_check_every(info):
+        """Segundos ate reler o quadro. O Paw and Fur nao tem rastreador na tela: pelo ritmo das ultimas leituras,
+        relê quando deve estar perto de completar (min 2 min, max 15 min) pra nao ficar caçando a criatura a toa."""
+        kills = info.get("paw_kills")
+        rate = info.get("paw_rate") or 0                    # abates por segundo
+        if not kills or not kills[1]:
+            return 900
+        left = kills[1] - kills[0]
+        if left <= 0:
+            return 60
+        if rate <= 0:
+            return 300
+        return max(120, min(900, left / rate * 0.8))
+
     def _all_trained(self):
         """Todas as contas marcadas pra treinar ja recuperaram (as que nao estao treinando contam como prontas)."""
         return all(training_done(a.state, self.cfg) for a in self.accounts
@@ -468,6 +483,11 @@ class Engine:
                 got = acc.select_paw(choice)
                 paw = acc._paw_now()
                 active = paw["active"]
+        before, before_kills, before_at = info.get("paw"), info.get("paw_kills"), info.get("checked_at")
+        if active and before == active[0] and before_kills and before_at and time.time() > before_at:
+            info["paw_rate"] = max(0.0, (active[1] - before_kills[0]) / (time.time() - before_at))
+        elif not active or before != active[0]:
+            info["paw_rate"] = 0
         info["paw"] = active[0] if active else None
         info["paw_kills"] = list(active[1:]) if active else None
         info["paw_options"] = paw["options"]
