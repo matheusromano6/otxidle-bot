@@ -115,6 +115,7 @@ class Engine:
         self.exercise_try = {}        # conta -> quando pode tentar ligar a arma de exercicio de novo
         self.credentials = None       # logins salvos (aba Login) pra relogar depois do server save
         self.targets = {}             # conta -> (caça do grupo dela, motivo) do ultimo plano
+        self.refresh_hunts_every = 20 * 3600   # relê a lista de caças do jogo (caças novas) a cada 20h
         self.current_hunt = {}        # conta -> caça do grupo (estabilidade: so' troca se outra atender mais tasks)
         self.login_busy = set()
         self._warned = set()
@@ -693,7 +694,7 @@ class Engine:
             acc.sell_all()
             self._note_floor(acc)
         self._fix_party(group)
-        if self.tasks_on and T.hunts_age() > 20 * 3600:
+        if self.tasks_on and self.refresh_hunts_every and T.hunts_age() > self.refresh_hunts_every:
             self._refresh_hunts(group.leader)
         group.leader.start_hunt(hunt)
         self.ours.difference_update(group.names)

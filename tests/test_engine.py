@@ -194,7 +194,9 @@ def make_cfg(tasks=False, **changes):
 
 
 def engine_for(world, cfg):
-    return Engine(world.accounts, cfg, log=lambda m: None, memory=Memory(), hunts=HUNTS)
+    eng = Engine(world.accounts, cfg, log=lambda m: None, memory=Memory(), hunts=HUNTS)
+    eng.refresh_hunts_every = None          # testes nunca releem/gravam a lista de caças
+    return eng
 
 
 def board(active=None, kills=0, need=100, difficulty="Adepto", tokens=2):
