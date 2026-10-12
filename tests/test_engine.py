@@ -256,7 +256,7 @@ class EngineV1Test(unittest.TestCase):
         w = World()
         leader, um = FakeAccount(w, "Lider", cap_free=20), FakeAccount(w, "Um")
         w.parties["Lider"] = ["Um"]
-        engine_for(w, make_cfg(party={"enabled": True, "leader": "lider", "members": ["um"]})).tick()
+        engine_for(w, make_cfg(party={"enabled": True, "leader": "lider", "members": ["um"], "hunt": "Troll Hills"})).tick()
         self.assertEqual(leader.actions, ["finish", "sell", "hunt:Troll Hills"])
         self.assertEqual(um.actions, ["sell"])
         self.assertEqual(um.state.phase, "hunting")
@@ -265,8 +265,8 @@ class EngineV1Test(unittest.TestCase):
         w = World()
         leader = FakeAccount(w, "Lider", phase="city")
         um, dois = FakeAccount(w, "Um", phase="city"), FakeAccount(w, "Dois", phase="city")
-        cfg = make_cfg(party={"enabled": True, "leader": "lider", "members": ["um", "dois"]}, idle_city_seconds=0,
-                       default_hunt="Troll Hills")
+        cfg = make_cfg(party={"enabled": True, "leader": "lider", "members": ["um", "dois"], "hunt": "Troll Hills"},
+                       idle_city_seconds=0)
         engine_for(w, cfg).tick()
         self.assertEqual(leader.actions, ["sell", "invite:Um", "invite:Dois", "hunt:Troll Hills"])
         self.assertEqual(um.actions, ["sell", "accept"])
@@ -320,7 +320,7 @@ class EngineV1Test(unittest.TestCase):
         eng.tick()
         self.assertEqual(kina.actions, ["exercise"])             # liga a arma, NAO encerra o treino manual
         self.assertEqual(kina.state.phase, "training")
-        self.assertIn("hunt:Troll Hills", um.actions)            # o resto segue sem o lider que esta treinando
+        self.assertIn("hunt:Orc Camp", um.actions)               # o resto segue sem o lider (solo: a mais forte segura)
         eng.tick()
         self.assertEqual(kina.actions, ["exercise"])
 

@@ -1,3 +1,3 @@
 ﻿"""Bot do OtxIdle (otxidle.com.br) pra rodar dentro do IdleDeck."""
 
-VERSION = "2.3.1"
+VERSION = "2.3.2"

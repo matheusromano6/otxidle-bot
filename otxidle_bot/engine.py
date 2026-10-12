@@ -207,9 +207,9 @@ class Engine:
             self._safe(acc.name, acc.dismiss_notices, [acc])
         states = {n: st for n, st in states.items() if st.phase != "offline"}
         accounts = [a for a in self.accounts if a.name in states and a.state.phase != "offline"]
+        if self.hunts is None and (self.tasks_on or self.party_first):
+            self.hunts = T.load_hunts()
         if self.tasks_on:
-            if self.hunts is None:
-                self.hunts = T.load_hunts()
             for acc in accounts:
                 if time.time() >= self.cooldown.get(acc.name, 0):
                     self._safe(acc.name, lambda acc=acc: self._task_upkeep(acc), [acc])
@@ -253,7 +253,7 @@ class Engine:
     # ---------------------------------------------------------- grupos
     def _groups(self, accounts):
         skip = {k for k, until in self.party_skip.items() if time.time() < until}
-        if not self.tasks_on:
+        if not self.tasks_on and not self.party_first:
             return build_groups(accounts, self.cfg, skip)
         by = {a.name.casefold(): a for a in accounts}
         day = self.memory.tasks_today(task_day(self.cfg))
@@ -276,7 +276,7 @@ class Engine:
 
     @property
     def party_first(self):
-        return self.tasks_on and bool(self.cfg["party"].get("enabled"))
+        return bool(self.cfg["party"].get("enabled"))
 
     def _groups_party_first(self, accounts, by, day, skip):
         infos = []
@@ -641,7 +641,7 @@ class Engine:
         out = [a.name for a in group.members if a.state.phase != "hunting"]
         if out:
             return f"reagrupar a party ({', '.join(out)} fora da caça)"
-        if not self.tasks_on:
+        if not self.tasks_on and not self.party_first:
             return None
         if group.hunt and group.leader.state.hunt_name.casefold() != group.hunt.casefold():
             return f"plano mudou: caça {group.hunt} (está em {group.leader.state.hunt_name})"
@@ -694,7 +694,7 @@ class Engine:
             acc.sell_all()
             self._note_floor(acc)
         self._fix_party(group)
-        if self.tasks_on and self.refresh_hunts_every and T.hunts_age() > self.refresh_hunts_every:
+        if (self.tasks_on or self.party_first) and self.refresh_hunts_every and T.hunts_age() > self.refresh_hunts_every:
             self._refresh_hunts(group.leader)
         group.leader.start_hunt(hunt)
         self.ours.difference_update(group.names)

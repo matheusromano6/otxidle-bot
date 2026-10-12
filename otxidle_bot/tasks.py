@@ -311,7 +311,8 @@ def plan_party_first(accounts, hunts, cfg, current=None):
                               and levels_ok([leader["level"], by[m]["level"]])]
     if len(members) >= 2:
         max_rec, low, now = leader["level"] + over, min(a["level"] for a in members), current.get(leader["name"].casefold())
-        if (cfg.get("tasks") or {}).get("priority", "xp") == "xp":
+        tcfg = cfg.get("tasks") or {}
+        if not tcfg.get("enabled", True) or tcfg.get("priority", "xp") == "xp":
             # LEVEL primeiro (usuario): a caça mais forte que a party aguenta; tasks/Paw so' de carona
             hunt = party.get("hunt") or strongest_hunt(hunts, max_rec, low, now)
         else:
