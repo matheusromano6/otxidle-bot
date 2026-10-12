@@ -116,6 +116,7 @@ class Engine:
         self.credentials = None       # logins salvos (aba Login) pra relogar depois do server save
         self.targets = {}             # conta -> (caça do grupo dela, motivo) do ultimo plano
         self.refresh_hunts_every = 20 * 3600   # relê a lista de caças do jogo (caças novas) a cada 20h
+        self.blocked_hunts = {}       # caça -> ate quando nao tentar (o jogo nao deixou a party toda entrar)
         self.current_hunt = {}        # conta -> caça do grupo (estabilidade: so' troca se outra atender mais tasks)
         self.login_busy = set()
         self._warned = set()
@@ -285,7 +286,8 @@ class Engine:
             infos.append({"name": acc.name, "level": acc.state.level or 1, "daily": info.get("creature"),
                           "cards": info.get("cards") or [], "paw": info.get("paw"), "paw_options": info.get("paw_options") or []})
         groups = []
-        for pg in T.plan_party_first(infos, self.hunts, self.cfg, self.current_hunt):
+        blocked = [h for h, until in self.blocked_hunts.items() if time.time() < until]
+        for pg in T.plan_party_first(infos, self.hunts, self.cfg, self.current_hunt, blocked):
             names = list(pg.accounts)
             for name in list(names[1:]):
                 if name.casefold() in skip:            # nao conseguiu entrar na party: caça sozinho, em caça segura
@@ -447,6 +449,19 @@ class Engine:
             T.save_hunts(fresh)
             self.hunts = fresh
             self.log(f"lista de caças relida: {len(fresh)} caças" + (f" (novas: {', '.join(new[:8])})" if new else ""))
+
+    def _check_party_entered(self, group, hunt):
+        """Minimo da caça pelo lider: se algum membro nao entrou junto, bloqueia a caça por 6h e o grupo reagrupa."""
+        out = []
+        for _ in range(8):
+            time.sleep(1)
+            out = [a for a in group.members if a.read().phase != "hunting"]
+            if not out:
+                return
+        self.blocked_hunts[hunt] = time.time() + 6 * 3600
+        self.log(f"[{group.label}] {', '.join(a.name for a in out)} não entrou em {hunt} (level mínimo?) - "
+                 f"caça bloqueada por 6h, o grupo vai pra próxima")
+        group.leader.finish_hunt()
 
     def _all_trained(self):
         """Todas as contas marcadas pra treinar ja recuperaram (as que nao estao treinando contam como prontas)."""
@@ -697,6 +712,8 @@ class Engine:
         if (self.tasks_on or self.party_first) and self.refresh_hunts_every and T.hunts_age() > self.refresh_hunts_every:
             self._refresh_hunts(group.leader)
         group.leader.start_hunt(hunt)
+        if group.is_party:
+            self._check_party_entered(group, hunt)
         self.ours.difference_update(group.names)
         self.city_since.pop(group.label, None)
 

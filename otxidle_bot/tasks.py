@@ -50,10 +50,12 @@ def save_hunts(hunts, path=None):
         json.dump({"read_at": __import__("time").time(), "hunts": hunts}, file, ensure_ascii=False, indent=1)
 
 
-def strongest_hunt(hunts, max_rec, min_level, current=None):
-    """Modo XP: a caça mais forte permitida (recomendado <= max_rec, minimo <= min_level). Empate de level recomendado
-    com a atual = fica na atual (nao fica trocando)."""
-    options = [h for h in hunts if (h.get("rec_level") or 1) <= max_rec and (h.get("min_level") or 1) <= min_level]
+def strongest_hunt(hunts, max_rec, min_level, current=None, blocked=()):
+    """Modo XP: a caça mais forte permitida (recomendado <= max_rec, minimo <= min_level, fora 'blocked'). Empate de
+    level recomendado com a atual = fica na atual (nao fica trocando)."""
+    blocked = {b.casefold() for b in blocked}
+    options = [h for h in hunts if (h.get("rec_level") or 1) <= max_rec and (h.get("min_level") or 1) <= min_level
+               and h["name"].casefold() not in blocked]
     if not options:
         return None
     top = max(h.get("rec_level") or 1 for h in options)
@@ -292,7 +294,7 @@ def best_hunt(hunts, accounts, max_rec, min_level, current=None, fallback=None):
     return best["name"], best_score
 
 
-def plan_party_first(accounts, hunts, cfg, current=None):
+def plan_party_first(accounts, hunts, cfg, current=None, blocked=()):
     """Party de 4 primeiro (juntas aguentam criaturas mais fortes) e as tasks seguem a caça da party.
     accounts: [{'name', 'level', 'daily', 'cards', 'paw', 'paw_options'}] (so' as que estao jogando).
     current: {nome: caça atual do grupo da conta} pra estabilidade. Fora da party (2/3) = solo com caça segura."""
@@ -310,11 +312,14 @@ def plan_party_first(accounts, hunts, cfg, current=None):
         members = [leader] + [by[m] for m in wanted if m in by and m != leader["name"].casefold()
                               and levels_ok([leader["level"], by[m]["level"]])]
     if len(members) >= 2:
-        max_rec, low, now = leader["level"] + over, min(a["level"] for a in members), current.get(leader["name"].casefold())
+        # minimo da caça pelo LIDER (usuario: "o lider leva a party porque o conjunto e' forte"); se o jogo nao deixar
+        # algum membro entrar, o motor bloqueia a caça por um tempo (blocked)
+        max_rec, now = leader["level"] + over, current.get(leader["name"].casefold())
+        low = leader["level"] if party.get("min_by_leader", True) else min(a["level"] for a in members)
         tcfg = cfg.get("tasks") or {}
         if not tcfg.get("enabled", True) or tcfg.get("priority", "xp") == "xp":
             # LEVEL primeiro (usuario): a caça mais forte que a party aguenta; tasks/Paw so' de carona
-            hunt = party.get("hunt") or strongest_hunt(hunts, max_rec, low, now)
+            hunt = party.get("hunt") or strongest_hunt(hunts, max_rec, low, now, blocked)
         else:
             # 'Caça da party' = caça PADRAO: so' quando nenhuma caça tem task das contas
             hunt = best_hunt(hunts, members, max_rec, low, now, fallback=party.get("hunt") or None)[0]

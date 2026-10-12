@@ -265,3 +265,9 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - Lista de caças desatualizava (usuario viu caças novas no jogo). Account.read_hunt_list relê tudo (nome + LEVEL/MIN) e
   abre detalhe so das novas; Engine._refresh_hunts antes de iniciar caça se `hunts.json` (ao lado do .exe, {read_at,
   hunts}) tiver mais de 20h. load_hunts prefere esse arquivo ao embutido.
+
+## v2.4.0 - minimo da caça pelo LIDER (12/10/2026, usuario)
+- 'O lv maior atinge o esperado: o Kina pode ir e levar a party porque o conjunto e forte.' Caça da party: rec <= lider+5
+  e MIN <= level do LIDER (`party.min_by_leader`, padrao true). Se algum membro nao entrar (so o lider caçando), o bot
+  bloqueia a caça 6h (Engine.blocked_hunts / _check_party_entered) e vai pra proxima. Lider 26: Dwarf Mines / Corym Caves (30/24).
+- Lista relida 15:58: as mesmas 158 caças (nenhuma nova); Corym Caves ja existia (rec 30, min 24).

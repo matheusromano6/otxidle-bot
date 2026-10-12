@@ -511,6 +511,16 @@ class PartyFirstTest(unittest.TestCase):
         self.assertEqual(T.strongest_hunt(hunts, 29, 16, current="Forte"), "Forte")
         self.assertEqual(T.strongest_hunt(hunts, 21, 16, current="Tomb Floor II"), "Tomb Floor II")   # empate: fica
 
+    def test_minimum_by_leader_and_blocked(self):
+        corym = {"name": "Corym Caves", "rec_level": 30, "min_level": 24, "creatures": ["Corym Skirmisher"]}
+        hunts = HUNTS + [TOMB, corym]
+        cfg = make_cfg(tasks=False, party={"enabled": True, "leader": "kina", "members": ["pally"], "hunt": ""})
+        accs = [{"name": "Kina", "level": 26}, {"name": "Pally", "level": 19}]
+        self.assertEqual(T.plan_party_first(accs, hunts, cfg)[0].hunt, "Corym Caves")       # minimo 24 pelo lider (26)
+        self.assertEqual(T.plan_party_first(accs, hunts, cfg, blocked=["Corym Caves"])[0].hunt, "Tomb Floor II")
+        cfg["party"]["min_by_leader"] = False
+        self.assertEqual(T.plan_party_first(accs, hunts, cfg)[0].hunt, "Tomb Floor II")     # minimo de todos (19)
+
     def test_member_outside_two_thirds_goes_solo_safe(self):
         hunts = HUNTS + [TOMB]
         cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["baixo"], "hunt": ""})
