@@ -221,7 +221,12 @@ class Account:
             save.first.check()
         self._click(self.page.locator(S.LOGIN_SUBMIT).first)
         ok = self._wait(lambda: self.read().phase in ("offline", "city", "hunting", "training"), 20, 1)
-        self.log(f"login {username}: " + ("ok" if ok else "não entrou (servidor atualizando ou senha errada?)"))
+        if not ok:
+            hint = self.page.evaluate("() => document.body.innerText.slice(0, 1500)")
+            reason = "servidor ainda atualizando" if S.SERVER_UPDATING in hint.lower() else "senha errada ou outro aviso"
+            self.log(f"login {username}: não entrou ({reason}) - tento de novo em 1 min")
+        else:
+            self.log(f"login {username}: ok")
         return ok
 
     def dismiss_notices(self):

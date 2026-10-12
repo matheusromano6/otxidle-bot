@@ -217,3 +217,5 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - BUG achado 00:00: depois de completar/rerolar o bot lia as cartas cedo demais (lista velha) e o clique caia em OUTRA carta
   (Druid ficou com Marsh Stalker, Sorc com Tarantula achando que era Valkyrie). v2.0.6 espera as cartas mudarem e confere
   a task ativa depois de selecionar.
+- O aviso 'The server is being updated' FICA na tela de login mesmo depois que o servidor volta (visto 00:40). v2.0.7: recarrega
+  o /play/ e tenta o login mesmo assim; so espera 1 min se falhar. Relogin validado 00:44: 4 logins ok -> JOGAR AGORA.

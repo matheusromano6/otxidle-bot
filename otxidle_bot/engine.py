@@ -162,9 +162,12 @@ class Engine:
             if st.phase != "login":
                 continue
             if st.updating:
-                self._warn_once(("updating", int(time.time() // 600)), "servidor atualizando (server save) - tento logar de novo em 1 min")
-                self.cooldown["login"] = time.time() + 60
-                return
+                # o aviso "server is being updated" FICA na pagina depois que o servidor volta (visto ao vivo):
+                # recarrega o /play/ e tenta o login mesmo assim; so' espera se o login falhar
+                self._safe("login", acc.open_play, [acc])
+                st = acc.read()
+                if st.phase != "login":
+                    continue
             in_use = {self.memory.login_of(a.name) for a in self.accounts if a.name and a.state.phase not in ("site", "login")}
             free = [u for u in self.credentials.usernames() if u not in in_use and u not in self.login_busy]
             if not free:
