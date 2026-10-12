@@ -432,6 +432,21 @@ class Engine:
             return 300
         return max(120, min(900, left / rate * 0.8))
 
+    def _refresh_hunts(self, acc):
+        """Relê a lista de caças do jogo (atualizacoes liberam caças novas); so' abre o detalhe das novas."""
+        try:
+            known = {h["name"]: h["creatures"] for h in (self.hunts or [])}
+            fresh = acc.read_hunt_list(known)
+        except Exception as error:
+            self.log(f"não consegui reler a lista de caças: {error}")
+            T.save_hunts(self.hunts or [])           # tenta de novo amanha
+            return
+        if len(fresh) >= len(known) * 0.8:
+            new = [h["name"] for h in fresh if h["name"] not in known]
+            T.save_hunts(fresh)
+            self.hunts = fresh
+            self.log(f"lista de caças relida: {len(fresh)} caças" + (f" (novas: {', '.join(new[:8])})" if new else ""))
+
     def _all_trained(self):
         """Todas as contas marcadas pra treinar ja recuperaram (as que nao estao treinando contam como prontas)."""
         return all(training_done(a.state, self.cfg) for a in self.accounts
@@ -460,7 +475,8 @@ class Engine:
                 self.log(f"{acc.name}: task {card.creature} ({card.need} abates, {card.xp} XP) - na caça do grupo, {target}")
                 break
             paw_there = (info.get("paw") or "").casefold() in there
-            if not paw_there and board.tokens > 0 and rerolls < tcfg.get("max_rerolls", 2):
+            xp_mode = tcfg.get("priority", "xp") == "xp"        # modo XP: diaria so' de carona, sem gastar token
+            if not xp_mode and not paw_there and board.tokens > 0 and rerolls < tcfg.get("max_rerolls", 2):
                 # (o grupo esta la' pelo Paw and Fur: nao gasta token procurando diaria dessa caça)
                 rerolls += 1
                 board = acc.reroll(difficulty)
@@ -506,8 +522,8 @@ class Engine:
                 return paw
         there = self._hunt_creatures(target)
         choice = next((c for c in options if c.casefold() in there), None)
-        if choice:
-            return choice
+        if choice or self.cfg["tasks"].get("priority", "xp") == "xp":
+            return choice                  # modo XP: Paw so' de carona (criatura da caça do grupo)
         levels = [a.state.level or 1 for a in mates]
         top = max(levels) + (self.cfg["tasks"].get("group_level_over", 5) if len(mates) > 1 else 0)
         best = None
@@ -677,6 +693,8 @@ class Engine:
             acc.sell_all()
             self._note_floor(acc)
         self._fix_party(group)
+        if self.tasks_on and T.hunts_age() > 20 * 3600:
+            self._refresh_hunts(group.leader)
         group.leader.start_hunt(hunt)
         self.ours.difference_update(group.names)
         self.city_since.pop(group.label, None)

@@ -18,12 +18,49 @@ MAX_PARTY = 4
 
 
 # ------------------------------------------------------------------ catalogo
+def user_hunts_path():
+    """Lista de caças relida do jogo pelo bot (fica ao lado do .exe e vale mais que a embutida)."""
+    from .paths import app_dir
+    return os.path.join(app_dir(), "hunts.json")
+
+
 def load_hunts(path=None):
+    if path is None and os.path.exists(user_hunts_path()):
+        path = user_hunts_path()
     path = path or os.path.join(resource_dir(), "otxidle_bot", "data", "hunts.json")
     if not os.path.exists(path):
         path = os.path.join(os.path.dirname(__file__), "data", "hunts.json")
     with open(path, encoding="utf-8") as file:
-        return json.load(file)
+        data = json.load(file)
+    return data["hunts"] if isinstance(data, dict) else data
+
+
+def hunts_age(path=None):
+    """Segundos desde a ultima releitura da lista (infinito se nunca releu)."""
+    path = path or user_hunts_path()
+    try:
+        with open(path, encoding="utf-8") as file:
+            return max(0.0, __import__("time").time() - float(json.load(file).get("read_at", 0)))
+    except (OSError, ValueError, AttributeError):
+        return float("inf")
+
+
+def save_hunts(hunts, path=None):
+    with open(path or user_hunts_path(), "w", encoding="utf-8") as file:
+        json.dump({"read_at": __import__("time").time(), "hunts": hunts}, file, ensure_ascii=False, indent=1)
+
+
+def strongest_hunt(hunts, max_rec, min_level, current=None):
+    """Modo XP: a caça mais forte permitida (recomendado <= max_rec, minimo <= min_level). Empate de level recomendado
+    com a atual = fica na atual (nao fica trocando)."""
+    options = [h for h in hunts if (h.get("rec_level") or 1) <= max_rec and (h.get("min_level") or 1) <= min_level]
+    if not options:
+        return None
+    top = max(h.get("rec_level") or 1 for h in options)
+    now = next((h for h in options if current and h["name"].casefold() == current.casefold()), None)
+    if now is not None and (now.get("rec_level") or 1) >= top:
+        return now["name"]
+    return max(options, key=lambda h: (h.get("rec_level") or 1, len(h["creatures"])))["name"]
 
 
 def hunt_options(hunts, creature, level, over=0):
@@ -273,9 +310,13 @@ def plan_party_first(accounts, hunts, cfg, current=None):
         members = [leader] + [by[m] for m in wanted if m in by and m != leader["name"].casefold()
                               and levels_ok([leader["level"], by[m]["level"]])]
     if len(members) >= 2:
-        # 'Caça da party' agora e' a caça PADRAO: so' quando nenhuma caça tem task das contas
-        hunt = best_hunt(hunts, members, leader["level"] + over, min(a["level"] for a in members),
-                         current.get(leader["name"].casefold()), fallback=party.get("hunt") or None)[0]
+        max_rec, low, now = leader["level"] + over, min(a["level"] for a in members), current.get(leader["name"].casefold())
+        if (cfg.get("tasks") or {}).get("priority", "xp") == "xp":
+            # LEVEL primeiro (usuario): a caça mais forte que a party aguenta; tasks/Paw so' de carona
+            hunt = party.get("hunt") or strongest_hunt(hunts, max_rec, low, now)
+        else:
+            # 'Caça da party' = caça PADRAO: so' quando nenhuma caça tem task das contas
+            hunt = best_hunt(hunts, members, max_rec, low, now, fallback=party.get("hunt") or None)[0]
         if hunt:
             groups.append(PlanGroup(hunt, [a["name"] for a in members], "party"))
     used = {n.casefold() for g in groups for n in g.accounts}

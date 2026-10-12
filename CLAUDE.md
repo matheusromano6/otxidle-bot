@@ -256,3 +256,12 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - Paw entregue (08:55): a linha fica na lista como `.pw-row.is-done` com tag 'Concluída' e o `.pw-btn` vira 'CONCLUÍDA' (disabled).
   v2.2.2 ignora linhas is-done (antes tentava pegar o Crocodile de novo -> timeout). E nao rerola diaria quando o grupo
   esta na caça por causa do Paw (Sorc gastou 2 tokens). Proximo Paw do grupo: Tarantula (Tiquanda) - Stone Golem pede min 20.
+
+## v2.3.0 - LEVEL primeiro (12/10/2026, usuario)
+- 'Nao compensa no inicio fazer as diarias (retorno baixo); precisamos de level: priorizar a hunt x4 em hunts maiores.'
+  `tasks.priority` = 'xp' (padrao): party na caça MAIS FORTE permitida (rec <= lider+5, min <= o mais baixo; empate fica
+  na atual) via tasks.strongest_hunt; diaria/Paw so de carona (sem reroll, Paw so se a criatura estiver na caça).
+  'tasks' = logica anterior (best_hunt por tasks, Paw primeiro).
+- Lista de caças desatualizava (usuario viu caças novas no jogo). Account.read_hunt_list relê tudo (nome + LEVEL/MIN) e
+  abre detalhe so das novas; Engine._refresh_hunts antes de iniciar caça se `hunts.json` (ao lado do .exe, {read_at,
+  hunts}) tiver mais de 20h. load_hunts prefere esse arquivo ao embutido.

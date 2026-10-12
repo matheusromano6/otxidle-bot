@@ -352,6 +352,43 @@ class Account:
             raise GameError(f"nao entrou na caça '{hunt}'")
         self.log(f"{self.name}: iniciou a caça {hunt}")
 
+    def read_hunt_list(self, known):
+        """JOGAR -> HUNTS: le TODAS as caças (nome, level recomendado/minimo). Criaturas: so' abre o detalhe das que nao
+        estao em 'known' ({nome: criaturas}). Retorna a lista no formato do hunts.json. So' na cidade."""
+        self._open_play("HUNTS")
+        search = self.page.locator(S.MODAL + " " + S.HUNT_SEARCH)
+        if search.count():
+            search.first.click()
+            search.first.press("Control+a")
+            search.first.press("Backspace")
+            time.sleep(1)
+        out, seen = [], set()
+        for _ in range(40):
+            cards = self.page.locator(S.MODAL + " " + S.GM_CARD)
+            for i in range(cards.count()):
+                card = cards.nth(i)
+                lines = [x.strip() for x in card.inner_text().split("\n") if x.strip()]
+                name = lines[0] if lines else ""
+                if not name or name in seen:
+                    continue
+                seen.add(name)
+                m = re.search(r"LEVEL\s+(\d+)\s*·\s*MIN\.?\s*(\d+)", " ".join(lines), re.I)
+                creatures = known.get(name)
+                if creatures is None:
+                    card.dispatch_event("click")
+                    time.sleep(0.5)
+                    creatures = self.page.evaluate(
+                        "() => [...document.querySelectorAll('.gm-panel .gm-creature')].map(c => (c.innerText || c.getAttribute('aria-label') || '').trim()).filter(x => x)")
+                out.append({"name": name, "rec_level": int(m.group(1)) if m else None,
+                            "min_level": int(m.group(2)) if m else None, "creatures": creatures or []})
+            nxt = self.page.locator(S.MODAL + " button.gs-tool", has_text="›")
+            if not nxt.count() or nxt.first.is_disabled():
+                break
+            nxt.first.dispatch_event("click")
+            time.sleep(0.7)
+        self.close_modals()
+        return out
+
     def _find_card(self, hunt):
         """Acha o card da caça: DIGITA no campo de busca da janela (o texto de dica mudou de "Buscar caças" pra
         "Caça ou criatura" numa atualizacao, e .fill() nao dispara o filtro); se nao achar, percorre as paginas."""

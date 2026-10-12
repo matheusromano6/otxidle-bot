@@ -36,6 +36,9 @@ DEFAULTS = {
     # juntas; quem termina ajuda quem falta (helpers); quando TODAS terminam, vai a party configurada pra party.hunt
     "tasks": {
         "enabled": True,
+        # "xp" = LEVEL primeiro: party de 4 na caça mais forte que aguenta, tasks/Paw so' de carona (sem reroll);
+        # "tasks" = a party vai pra caça que atende mais tasks (Paw and Fur primeiro)
+        "priority": "xp",
         "per_day": 0,                     # 0 = sem cota (com party: as tasks seguem a caça da party)
         "difficulty": "Adepto",
         "helpers": True,

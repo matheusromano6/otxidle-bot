@@ -484,6 +484,7 @@ class PartyFirstTest(unittest.TestCase):
     def test_party_hunt_by_tasks(self):
         hunts = HUNTS + [TOMB, MINO, BARB]
         cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["pally", "druid", "sorc"], "hunt": ""})
+        cfg["tasks"]["priority"] = "tasks"
         accs = [{"name": "Kina", "level": 24, "daily": None, "cards": ["Minotaur Archer", "Skeleton"], "paw": None, "paw_options": []},
                 {"name": "Pally", "level": 16, "daily": "Mummy", "cards": [], "paw": None, "paw_options": []},
                 {"name": "Druid", "level": 18, "daily": "Crypt Shambler", "cards": [], "paw": None, "paw_options": []},
@@ -498,6 +499,16 @@ class PartyFirstTest(unittest.TestCase):
         accs[3]["cards"] = ["Skeleton"]                         # agora a Tomb atende mais: troca
         self.assertEqual(T.best_hunt(hunts, accs, 29, 16, current="Daramian Minotaur Pyramid")[0], "Tomb Floor II")
 
+    def test_xp_priority_goes_to_strongest(self):
+        hunts = HUNTS + [TOMB, MINO, BARB, {"name": "Forte", "rec_level": 28, "min_level": 16, "creatures": ["Dragon"]},
+                         {"name": "Alta", "rec_level": 28, "min_level": 25, "creatures": ["Demon"]}]
+        cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["pally"], "hunt": ""})
+        accs = [{"name": "Kina", "level": 24, "daily": "Mummy"}, {"name": "Pally", "level": 16, "daily": "Mummy"}]
+        groups = T.plan_party_first(accs, hunts, cfg)
+        self.assertEqual(groups[0].hunt, "Forte")              # rec <= 29 e minimo <= 16 (Alta pede 25): ignora a task
+        self.assertEqual(T.strongest_hunt(hunts, 29, 16, current="Forte"), "Forte")
+        self.assertEqual(T.strongest_hunt(hunts, 21, 16, current="Tomb Floor II"), "Tomb Floor II")   # empate: fica
+
     def test_member_outside_two_thirds_goes_solo_safe(self):
         hunts = HUNTS + [TOMB]
         cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["baixo"], "hunt": ""})
@@ -510,6 +521,7 @@ class PartyFirstTest(unittest.TestCase):
         kina = FakeAccount(w, "Kina", level=24, hunt="Tomb Floor II", board=board("Orc", 183, 183))
         kina.paw = {"active": None, "options": ["Crocodile", "Mummy"]}
         eng = engine_for(w, make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": [], "hunt": ""}))
+        eng.cfg["tasks"]["priority"] = "tasks"
         eng.hunts = HUNTS + [TOMB]
         eng.targets = {"Kina": ("Tomb Floor II", "party")}
         eng.party_first or self.fail("party_first")
@@ -551,6 +563,7 @@ class PartyFirstTest(unittest.TestCase):
         kina = FakeAccount(w, "Kina", level=24, hunt="Tomb Floor II")
         sorc = FakeAccount(w, "Sorc", level=20, hunt="Tomb Floor II")
         eng = engine_for(w, make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["sorc"], "hunt": ""}))
+        eng.cfg["tasks"]["priority"] = "tasks"
         tara = {"name": "Tiquanda Tarantula Cave", "rec_level": 20, "min_level": 16, "creatures": ["Tarantula"]}
         eng.hunts = HUNTS + [TOMB, tara]
         eng.targets = {"Kina": ("Tomb Floor II", "party"), "Sorc": ("Tomb Floor II", "party")}

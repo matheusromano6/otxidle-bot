@@ -25,6 +25,7 @@ BG, PANEL, PANEL_ALT, BORDER = "#101418", "#161c22", "#1d252d", "#2b3640"
 TEXT, MUTED, ACCENT, ACCENT_HOVER, DANGER, WARN = "#e6edf3", "#8b98a5", "#ff8c1a", "#e67a0f", "#f85149", "#d29922"
 PHASES = {"hunting": "caçando", "city": "cidade", "training": "treinando", "leaving": "saindo", "unknown": "?"}
 MAX_LOG_LINES = 500
+PRIORITIES = {"xp": "XP: party na caça mais forte (tasks de carona)", "tasks": "Tasks: caça que atende mais tasks / Paw"}
 
 
 def fmt_min(minutes):
@@ -510,13 +511,17 @@ class App:
         self.task_difficulty = tk.StringVar(value=tasks.get("difficulty") or "Adepto")
         ctk.CTkOptionMenu(grid, values=["Iniciante", "Adepto", "Experiente", "Mestre"], variable=self.task_difficulty,
                           width=140, fg_color=PANEL_ALT).grid(row=4, column=1, sticky="w")
+        ctk.CTkLabel(grid, text="Prioridade", text_color=TEXT).grid(row=7, column=0, sticky="w", pady=4)
+        self.task_priority = tk.StringVar(value=PRIORITIES.get(tasks.get("priority", "xp"), PRIORITIES["xp"]))
+        ctk.CTkOptionMenu(grid, values=list(PRIORITIES.values()), variable=self.task_priority, width=300,
+                          fg_color=PANEL_ALT).grid(row=7, column=1, columnspan=2, sticky="w")
         self.task_helpers = tk.BooleanVar(value=bool(tasks.get("helpers", True)))
         ctk.CTkCheckBox(grid, text="Quem terminou ajuda quem ainda está em task", variable=self.task_helpers,
                         fg_color=ACCENT, text_color=TEXT).grid(row=5, column=0, columnspan=3, sticky="w", pady=8)
         ctk.CTkButton(grid, text="Salvar tasks", command=self._save_tasks, fg_color=ACCENT, hover_color=ACCENT_HOVER,
-                      text_color="#1a0d00").grid(row=6, column=0, sticky="w", pady=6)
+                      text_color="#1a0d00").grid(row=8, column=0, sticky="w", pady=6)
         self.tasks_msg = ctk.CTkLabel(grid, text="", text_color=MUTED)
-        self.tasks_msg.grid(row=6, column=1, columnspan=2, sticky="w")
+        self.tasks_msg.grid(row=8, column=1, columnspan=2, sticky="w")
 
     def _save_tasks(self):
         tasks = self.cfg["tasks"]
@@ -532,6 +537,7 @@ class App:
         tasks["enabled"] = bool(self.tasks_enabled.get())
         tasks["difficulty"] = self.task_difficulty.get()
         tasks["helpers"] = bool(self.task_helpers.get())
+        tasks["priority"] = next(k for k, v in PRIORITIES.items() if v == self.task_priority.get())
         self.save()
         self.tasks_msg.configure(text="Salvo.", text_color=ACCENT)
 
