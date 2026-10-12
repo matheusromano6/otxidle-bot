@@ -25,6 +25,14 @@ LOGIN_SAVE = 'input[type="checkbox"]'    # "Salvar login" (o server save apaga m
 LOGIN_SUBMIT = 'button[type="submit"]'   # "LOGIN"
 SERVER_UPDATING = "server is being updated"   # "The server is being updated. Please sign in again in a moment."
 
+# --- telas ao entrar
+NOTES_MODAL = ".un-modal"                # "NOVIDADES" (patch notes): rolar `.un-notes` ate o fim habilita `.un-confirm` CONFIRMAR
+NOTES_SCROLL = ".un-modal .un-notes"
+NOTES_CONFIRM = ".un-modal .un-confirm"
+DEATH_MODAL = ".dm-modal"                # "VOCÊ MORREU" (perdas, "Morto por X") -> `.dm-ok` CONTINUAR
+DEATH_OK = ".dm-modal .dm-ok"
+TASK_CLAIM = ".tb-claim"                 # "COLETAR DIÁRIO" no quadro de tasks (habilita depois das tasks do dia)
+
 # --- caçando
 HUNT_PANEL = "section.hb-panel"          # "Caçando / <nome> / Tempo de caça ..."
 HUNT_NAME = "section.hb-panel .gs-panelhead p"
@@ -46,7 +54,7 @@ MODAL = ".gm-modal"
 DRAWER = ".gm-panel"                     # gaveta de detalhe da caça
 GM_TAB = "button.gm-tab"                 # HUNTS / TRAINING / ...
 GM_CARD = "button.gm-card"               # card de caça / treino ("Nome\nLEVEL ...")
-HUNT_SEARCH = 'input[placeholder="Buscar caças"]'
+HUNT_SEARCH = "input"                    # unico campo da janela ("Caça ou criatura"; antes "Buscar caças") - DIGITAR
 START_HUNT = "button.gs-cta"             # dentro da gaveta: "COMEÇAR A CAÇA"
 START_HUNT_TEXT = "COMEÇAR A CAÇA"
 

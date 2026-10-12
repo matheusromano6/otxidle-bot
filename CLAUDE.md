@@ -219,3 +219,13 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   a task ativa depois de selecionar.
 - O aviso 'The server is being updated' FICA na tela de login mesmo depois que o servidor volta (visto 00:40). v2.0.7: recarrega
   o /play/ e tenta o login mesmo assim; so espera 1 min se falhar. Relogin validado 00:44: 4 logins ok -> JOGAR AGORA.
+
+## Telas ao entrar e busca de caça (12/10/2026, ao vivo)
+- Depois do login aparece `.un-modal` 'NOVIDADES' (patch notes): `.un-confirm` CONFIRMAR fica DISABLED ate rolar `.un-notes` ate o fim
+  (wheel + scrollTop=scrollHeight). Morte: `.gm-modal.dm-modal` 'VOCÊ MORREU' ('Morto por X', XP/skills/ouro perdidos, 'As suas
+  blessings acabaram') -> `.dm-ok` CONTINUAR. v2.0.8 trata os dois e loga a morte. `.tb-claim` 'COLETAR DIÁRIO' habilitou
+  depois das tasks do dia -> o bot coleta ao abrir o quadro.
+- Atualizacao do jogo (11/10) mudou a busca de caças: placeholder 'Caça ou criatura' (antes 'Buscar caças') e .fill() NAO
+  filtra; e' preciso DIGITAR (press_sequentially). Busca aceita criatura ('Tarantula' -> Tiquanda Tarantula Cave). v2.0.9 digita
+  e, se nao achar, pagina a lista (antes so olhava a 1a pagina -> 'caça nao encontrada').
+- Druid MORREU no Marsh Stalkers (lv 17, caça rec 15) para Swampling - solo com recomendado <= level nao garante segurança.

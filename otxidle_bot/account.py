@@ -33,6 +33,8 @@ READ_JS = r"""() => {
     party: q('.gs-chip.gs-party')?.getAttribute('aria-label') || '',
     tracker: [...document.querySelectorAll('section.ht-panel')].map(s => (s.getAttribute('aria-label') || '') + ' | ' + s.innerText).join(' || '),
     modals: modals, url: location.pathname,
+    notes: vis(q('.un-modal')),
+    death: vis(q('.dm-modal')) ? (q('.dm-modal').innerText || '').slice(0, 400) : '',
   };
 }"""
 
@@ -67,6 +69,8 @@ class State:
     vocation: str = ""
     phase: str = "unknown"          # hunting / leaving / city / training / offline / login / site / unknown
     updating: bool = False          # tela de login avisando que o servidor esta atualizando (server save)
+    notes: bool = False             # tela "NOVIDADES" aberta (precisa rolar e confirmar)
+    death: str = ""                 # texto da tela "VOCÊ MORREU" (vazio = nao morreu)
     hunt_name: str = ""
     cap_free: int = None
     cap_max: int = None
@@ -95,6 +99,8 @@ def build_state(raw, cap_max=None):
                stamina_hunt=parse_hm(raw.get("stamina_hunt")), stamina_train=parse_hm(raw.get("stamina_train")),
                party_size=parse_party(raw.get("party")), modals=list(raw.get("modals") or []))
     st.updating = bool(raw.get("updating"))
+    st.notes = bool(raw.get("notes"))
+    st.death = raw.get("death") or ""
     if raw.get("site"):
         st.phase = "site"
     elif raw.get("login"):
@@ -229,6 +235,42 @@ class Account:
             self.log(f"login {username}: ok")
         return ok
 
+    def dismiss_gates(self):
+        """Telas que travam o jogo ao entrar: NOVIDADES (rola ate o fim -> CONFIRMAR) e VOCÊ MORREU (CONTINUAR)."""
+        st = self.state
+        if st.death:
+            killer = re.search(r"Morto por ([^\n]+)", st.death)
+            lost = re.search(r"Experiência perdida\s*\n?\s*([^\n]+)", st.death)
+            self.log(f"{self.name}: MORREU" + (f" para {killer.group(1).strip()}" if killer else "")
+                     + (f" (XP {lost.group(1).strip()})" if lost else "")
+                     + (" - sem blessings" if "blessings acabaram" in st.death else ""))
+            self._click(self.page.locator(S.DEATH_OK).first)
+            time.sleep(1)
+        if self.page.locator(S.NOTES_MODAL).count():
+            notes = self.page.locator(S.NOTES_SCROLL)
+            if notes.count():
+                notes.first.hover()
+                for _ in range(15):
+                    self.page.mouse.wheel(0, 500)
+                    time.sleep(0.15)
+                self.page.evaluate("() => { const n = document.querySelector('.un-modal .un-notes');"
+                                   " if (n) { n.scrollTop = n.scrollHeight; n.dispatchEvent(new Event('scroll')); } }")
+            confirm = self.page.locator(S.NOTES_CONFIRM).first
+            self._wait(lambda: not confirm.is_disabled(), 5, 0.3)
+            self._click(confirm)
+            time.sleep(0.8)
+            self.log(f"{self.name}: leu e confirmou as NOVIDADES")
+
+    def claim_daily(self):
+        """Quadro aberto: 'COLETAR DIÁRIO' habilitado -> coleta."""
+        button = self.page.locator(S.MODAL + " " + S.TASK_CLAIM)
+        if button.count() and not button.first.is_disabled():
+            self._click(button.first)
+            time.sleep(1)
+            self.log(f"{self.name}: coletou o prêmio diário das tasks")
+            return True
+        return False
+
     def dismiss_notices(self):
         """Fecha avisos que so' tem 'Entendi' (promoção etc.). Nunca clica em compra."""
         for _ in range(3):
@@ -287,16 +329,7 @@ class Account:
     def start_hunt(self, hunt):
         """JOGAR -> HUNTS -> card da caça -> COMEÇAR A CAÇA. Em party so' a lider chama (todos entram)."""
         self._open_play("HUNTS")
-        search = self.page.locator(S.HUNT_SEARCH)
-        if search.count():
-            search.fill(hunt)
-            time.sleep(0.8)
-        cards = self.page.locator(S.GM_CARD)
-        card = None
-        for i in range(cards.count()):
-            if cards.nth(i).inner_text().split("\n")[0].strip().casefold() == hunt.casefold():
-                card = cards.nth(i)
-                break
+        card = self._find_card(hunt)
         if card is None:
             self.close_modals()
             raise GameError(f"caça '{hunt}' nao encontrada")
@@ -309,6 +342,40 @@ class Account:
         if not ok:
             raise GameError(f"nao entrou na caça '{hunt}'")
         self.log(f"{self.name}: iniciou a caça {hunt}")
+
+    def _find_card(self, hunt):
+        """Acha o card da caça: DIGITA no campo de busca da janela (o texto de dica mudou de "Buscar caças" pra
+        "Caça ou criatura" numa atualizacao, e .fill() nao dispara o filtro); se nao achar, percorre as paginas."""
+        def match():
+            cards = self.page.locator(S.MODAL + " " + S.GM_CARD)
+            for i in range(cards.count()):
+                if cards.nth(i).inner_text().split("\n")[0].strip().casefold() == hunt.casefold():
+                    return cards.nth(i)
+            return None
+        search = self.page.locator(S.MODAL + " " + S.HUNT_SEARCH)
+        if search.count():
+            field = search.first
+            field.click()
+            field.press("Control+a")
+            field.press("Backspace")
+            field.press_sequentially(hunt, delay=40)
+            time.sleep(1.2)
+            card = match()
+            if card is not None:
+                return card
+            field.press("Control+a")
+            field.press("Backspace")
+            time.sleep(1)
+        for _ in range(20):
+            card = match()
+            if card is not None:
+                return card
+            nxt = self.page.locator(S.MODAL + " button.gs-tool", has_text="›")
+            if not nxt.count() or nxt.first.is_disabled():
+                return None
+            nxt.first.dispatch_event("click")
+            time.sleep(0.7)
+        return None
 
     def start_training(self, skill):
         """JOGAR -> TRAINING -> card da habilidade. CLICAR NO CARD JA INICIA o treino (sem confirmacao)."""

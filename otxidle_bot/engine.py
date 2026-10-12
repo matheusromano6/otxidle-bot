@@ -197,6 +197,9 @@ class Engine:
         for acc in [a for a in self.accounts if a.name in states and a.state.phase == "offline"]:
             if time.time() >= self.cooldown.get(acc.name, 0):
                 self._safe(acc.name, acc.login, [acc])          # o jogo derrubou: entra de novo
+        for acc in [a for a in self.accounts if a.name in states and (a.state.notes or a.state.death)]:
+            self._safe(acc.name, acc.dismiss_gates, [acc])
+            states[acc.name] = acc.read()
         for acc in [a for a in self.accounts if a.name in states and any(m.startswith("PROMOÇÃO") for m in a.state.modals)]:
             self._safe(acc.name, acc.dismiss_notices, [acc])
         states = {n: st for n, st in states.items() if st.phase != "offline"}
@@ -323,6 +326,7 @@ class Engine:
 
     def _board(self, acc, board, info):
         tcfg = self.cfg["tasks"]
+        acc.claim_daily()
         active = board.active
         if active and active.status == "complete":
             board = acc.complete_task(active.creature)

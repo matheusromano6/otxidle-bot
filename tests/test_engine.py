@@ -129,6 +129,13 @@ class FakeAccount:
         self.state.invite_from = ""
 
     # tasks
+    def claim_daily(self):
+        return False
+
+    def dismiss_gates(self):
+        self.actions.append("gates")
+        self.state.notes, self.state.death = False, ""
+
     def open_board(self):
         self.actions.append("board")
         return self.board
