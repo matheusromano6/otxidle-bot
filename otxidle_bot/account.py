@@ -493,13 +493,16 @@ class Account:
     # ("Crocodile" / ativa: "Crocodile\n0 / 300"); detalhe com `.pw-btn` SELECIONAR TASK / ABANDONAR (/ COMPLETAR).
     PAW_JS = r"""() => { const m = [...document.querySelectorAll('.gm-modal')].pop(); if (!m) return null;
       const rows = [...m.querySelectorAll('.pw-row')].map(r => { const lines = (r.innerText || '').split('\n').map(x => x.trim()).filter(x => x);
-        return { name: (r.querySelector('.pw-name')?.textContent || lines[0] || '').trim(), count: lines.slice(1).join(' ') }; });
+        return { name: (r.querySelector('.pw-name')?.textContent || lines[0] || '').trim(), count: lines.slice(1).join(' '),
+                 done: r.classList.contains('is-done') }; });
       return { rows, button: (m.querySelector('.pw-btn')?.innerText || '').trim() }; }"""
 
     def _paw_now(self):
         raw = self.page.evaluate(self.PAW_JS) or {}
         active, options = None, []
         for row in raw.get("rows") or []:
+            if row.get("done"):            # "Concluída" (`.pw-row.is-done`): ja paga, nunca mais aparece como opcao
+                continue
             m = re.search(r"([\d.,]+)\s*/\s*([\d.,]+)", row.get("count") or "")
             if m:
                 active = (row["name"], parse_int(m.group(1)) or 0, parse_int(m.group(2)) or 0)

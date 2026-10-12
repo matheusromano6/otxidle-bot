@@ -459,7 +459,9 @@ class Engine:
                 info.update(creature=got or card.creature, hunt=target, stuck=False, waiting=False)
                 self.log(f"{acc.name}: task {card.creature} ({card.need} abates, {card.xp} XP) - na caça do grupo, {target}")
                 break
-            if board.tokens > 0 and rerolls < tcfg.get("max_rerolls", 2):
+            paw_there = (info.get("paw") or "").casefold() in there
+            if not paw_there and board.tokens > 0 and rerolls < tcfg.get("max_rerolls", 2):
+                # (o grupo esta la' pelo Paw and Fur: nao gasta token procurando diaria dessa caça)
                 rerolls += 1
                 board = acc.reroll(difficulty)
                 continue

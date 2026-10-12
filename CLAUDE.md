@@ -252,3 +252,7 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   'Caça da party' virou a caça PADRAO (fallback quando nenhuma caça tem task); vazia = a mais forte que o grupo aguenta.
 - Treino SINCRONIZADO: stamina de uma -> as 4 treinam; voltam juntas quando todas recuperarem (Engine._all_trained).
 - Atencao: Kina 24 x Pally 16 no limite dos 2/3 (16*3=48 >= 24*2); Kina no 25 tira o Pally.
+
+- Paw entregue (08:55): a linha fica na lista como `.pw-row.is-done` com tag 'Concluída' e o `.pw-btn` vira 'CONCLUÍDA' (disabled).
+  v2.2.2 ignora linhas is-done (antes tentava pegar o Crocodile de novo -> timeout). E nao rerola diaria quando o grupo
+  esta na caça por causa do Paw (Sorc gastou 2 tokens). Proximo Paw do grupo: Tarantula (Tiquanda) - Stone Golem pede min 20.
