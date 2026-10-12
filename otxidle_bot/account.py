@@ -239,11 +239,15 @@ class Account:
         """Telas que travam o jogo ao entrar: NOVIDADES (rola ate o fim -> CONFIRMAR) e VOCÊ MORREU (CONTINUAR)."""
         st = self.state
         if st.death:
-            killer = re.search(r"Morto por ([^\n]+)", st.death)
-            lost = re.search(r"Experiência perdida\s*\n?\s*([^\n]+)", st.death)
-            self.log(f"{self.name}: MORREU" + (f" para {killer.group(1).strip()}" if killer else "")
-                     + (f" (XP {lost.group(1).strip()})" if lost else "")
-                     + (" - sem blessings" if "blessings acabaram" in st.death else ""))
+            # a mesma janela (.dm-modal) mostra o RELATORIO da caça ao clicar Finalizar Hunt (atualizacao de 11/10)
+            if "MORREU" in st.death.upper():
+                killer = re.search(r"Morto por ([^\n]+)", st.death)
+                lost = re.search(r"Experiência perdida\s*\n?\s*([^\n]+)", st.death)
+                self.log(f"{self.name}: MORREU" + (f" para {killer.group(1).strip()}" if killer else "")
+                         + (f" (XP {lost.group(1).strip()})" if lost else "")
+                         + (" - sem blessings" if "blessings acabaram" in st.death else ""))
+            else:
+                self.log(f"{self.name}: fechou o relatório da caça")
             self._click(self.page.locator(S.DEATH_OK).first)
             time.sleep(1)
         if self.page.locator(S.NOTES_MODAL).count():
