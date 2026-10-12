@@ -523,6 +523,22 @@ class PartyFirstTest(unittest.TestCase):
         self.assertEqual(info["paw"], "Mummy")
 
 
+    def test_group_picks_same_paw(self):
+        w = World()
+        kina = FakeAccount(w, "Kina", level=24, hunt="Tomb Floor II")
+        sorc = FakeAccount(w, "Sorc", level=20, hunt="Tomb Floor II")
+        eng = engine_for(w, make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["sorc"], "hunt": ""}))
+        tara = {"name": "Tiquanda Tarantula Cave", "rec_level": 20, "min_level": 16, "creatures": ["Tarantula"]}
+        eng.hunts = HUNTS + [TOMB, tara]
+        eng.targets = {"Kina": ("Tomb Floor II", "party"), "Sorc": ("Tomb Floor II", "party")}
+        options = ["Crocodile", "Badger", "Tarantula"]
+        # nenhuma na Tomb: a da caça mais forte que o grupo aguenta (Tiquanda rec 20) - nao a 1a da lista
+        self.assertEqual(eng._group_paw(kina, options, "Tomb Floor II"), "Tarantula")
+        from otxidle_bot.engine import task_day
+        eng.memory.set_task(task_day(eng.cfg), "Kina", {"paw": "Badger"})
+        self.assertEqual(eng._group_paw(sorc, options, "Tomb Floor II"), "Badger")      # segue a outra conta do grupo
+
+
 class EngineTasksTest(unittest.TestCase):
     def test_completes_rerolls_and_picks_while_hunting(self):
         w = World()

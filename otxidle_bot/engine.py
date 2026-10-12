@@ -458,11 +458,7 @@ class Engine:
             paw = acc.complete_paw(active[0])
             active = paw["active"]
         if not active and paw["options"]:
-            there = self._hunt_creatures(target)
-            level = acc.state.level or 1
-            choice = next((c for c in paw["options"] if c.casefold() in there), None)
-            if choice is None:
-                choice = next((c for c in paw["options"] if T.hunt_for(self.hunts, c, level)), None)
+            choice = self._group_paw(acc, paw["options"], target)
             if choice:
                 got = acc.select_paw(choice)
                 paw = acc._paw_now()
@@ -470,6 +466,29 @@ class Engine:
         info["paw"] = active[0] if active else None
         info["paw_kills"] = list(active[1:]) if active else None
         info["paw_options"] = paw["options"]
+
+    def _group_paw(self, acc, options, target):
+        """Paw and Fur e' a MESMA lista pras contas: o grupo pega a MESMA criatura pra caçar junto.
+        1) a que outra conta do grupo ja pegou; 2) uma da caça atual do grupo; 3) a da caça mais forte que o grupo
+        aguenta (recomendado ate +group_level_over do lider, minimo que todos alcançam)."""
+        day = self.memory.tasks_today(task_day(self.cfg))
+        mates = [a for a in self.accounts if a.name and self.targets.get(a.name, (None,))[0] == target] or [acc]
+        for mate in mates:
+            paw = (day.get(mate.name.casefold()) or {}).get("paw")
+            if paw and paw in options and mate is not acc:
+                return paw
+        there = self._hunt_creatures(target)
+        choice = next((c for c in options if c.casefold() in there), None)
+        if choice:
+            return choice
+        levels = [a.state.level or 1 for a in mates]
+        top = max(levels) + (self.cfg["tasks"].get("group_level_over", 5) if len(mates) > 1 else 0)
+        best = None
+        for creature in options:
+            for h in T.hunt_options(self.hunts, creature, min(levels), over=top - min(levels)):
+                if (h.get("rec_level") or 1) <= top and (best is None or (h.get("rec_level") or 1) > best[1]):
+                    best = (creature, h.get("rec_level") or 1)
+        return best[0] if best else None
 
     def _other_tasks(self, acc):
         """[(caça, level)] das tasks em andamento das OUTRAS contas abertas."""
