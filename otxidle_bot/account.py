@@ -285,7 +285,12 @@ class Account:
         if self.state.phase == "leaving":
             return
         self.close_modals()
-        self._click(self.page.locator(S.HUNT_PANEL + " button", has_text=S.FINISH_TEXT).first)
+        button = self.page.locator(S.HUNT_PANEL + " button", has_text=S.FINISH_TEXT)
+        if not button.count():
+            if self.read().phase != "hunting":
+                return                      # ja saiu (ex.: o lider da party saiu e trouxe esta conta junto)
+            button.first.wait_for(timeout=6000)
+        self._click(button.first)
         self.log(f"{self.name}: finalizando a caça")
 
     def wait_city(self, timeout=30):

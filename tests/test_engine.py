@@ -415,6 +415,15 @@ class TasksLogicTest(unittest.TestCase):
         self.assertEqual([(g.hunt, g.accounts, g.reason) for g in groups],
                          [("Orc Camp", ["Kina", "Pally"], "task"), ("Troll Hills", ["Druid", "Sorc"], "task")])
 
+    def test_helper_goes_to_group_above_its_level(self):
+        cfg = make_cfg(tasks=True)
+        accs = [{"name": "Kina", "level": 21, "task_hunt": None, "done": True},
+                {"name": "Pally", "level": 19, "task_hunt": "Orc Camp", "done": False},          # rec 8: tranquilo
+                {"name": "Sorc", "level": 14, "task_hunt": "Marsh Stalkers", "done": False}]   # rec 15 > 14: precisa
+        groups = {g.hunt: g.accounts for g in T.plan(accs, HUNTS, cfg)}
+        self.assertEqual(groups["Marsh Stalkers"], ["Kina", "Sorc"])
+        self.assertEqual(groups["Orc Camp"], ["Pally"])
+
     def test_plan_respects_two_thirds(self):
         cfg = make_cfg(tasks=True)
         accs = [{"name": "Alto", "level": 15, "task_hunt": "Orc Camp", "done": False},

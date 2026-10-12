@@ -57,6 +57,10 @@ def party_hunt(hunts, leader_level, levels, over=5):
     return max(options, key=lambda h: (h.get("rec_level") or 1, len(h["creatures"])))["name"]
 
 
+def hunt_rec_level(hunts, name):
+    return next((h.get("rec_level") or 1 for h in hunts if h["name"].casefold() == (name or "").casefold()), 1)
+
+
 def hunt_min_level(hunts, name):
     return next((h.get("min_level") or 1 for h in hunts if h["name"].casefold() == (name or "").casefold()), 1)
 
@@ -189,7 +193,12 @@ def plan(accounts, hunts, cfg, leader_pref=""):
                    and hunt_min_level(hunts, g.hunt) <= acc["level"]
                    and levels_ok([names[n.casefold()]["level"] for n in g.accounts] + [acc["level"]])]
         if cfg.get("tasks", {}).get("helpers", True) and options:
-            min(options, key=lambda g: len(g.accounts)).accounts.append(acc["name"])
+            # prioridade: grupo numa caça ACIMA do level de quem esta nele (pegou a task contando com ajuda),
+            # depois o grupo com menos gente
+            def need(g):
+                top = max(names[n.casefold()]["level"] for n in g.accounts)
+                return hunt_rec_level(hunts, g.hunt) > top
+            min(options, key=lambda g: (not need(g), len(g.accounts))).accounts.append(acc["name"])
         else:
             hunt = (cfg.get("tasks", {}).get("solo_hunts") or {}).get(acc["name"].casefold()) or solo_hunt(hunts, acc["level"])
             if hunt:

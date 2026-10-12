@@ -229,3 +229,7 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   filtra; e' preciso DIGITAR (press_sequentially). Busca aceita criatura ('Tarantula' -> Tiquanda Tarantula Cave). v2.0.9 digita
   e, se nao achar, pagina a lista (antes so olhava a 1a pagina -> 'caça nao encontrada').
 - Druid MORREU no Marsh Stalkers (lv 17, caça rec 15) para Swampling - solo com recomendado <= level nao garante segurança.
+- 01:18: Kina terminou as tasks e foi ajudar o Pally (Bone Crypt, facil), largando o Sorc 18 sozinho na Tiquanda (rec 20).
+  v2.0.10: ajudante prioriza o grupo numa caça ACIMA do level de quem esta nele (tasks.plan / hunt_rec_level). E o lider
+  saindo traz a party: o membro ja esta na cidade quando o bot tenta 'Finalizar Hunt' -> finish_hunt agora confere a fase
+  (antes dava timeout e pausava a conta 5 min).
