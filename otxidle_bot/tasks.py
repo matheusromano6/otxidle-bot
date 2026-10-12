@@ -210,6 +210,74 @@ def plan(accounts, hunts, cfg, leader_pref=""):
     return groups
 
 
+# ------------------------------------------------- party primeiro (v2.1)
+def hunt_score(hunt, accounts):
+    """Quantas tasks a caça atende. accounts: [{'daily', 'cards', 'paw', 'paw_options'}] (criaturas).
+    Diaria ativa la' = 3; Paw ativo la' = 2; sem diaria/Paw ativos, uma carta/opcao de Paw la' = 1 (pega de graça)."""
+    there = {c.casefold() for c in hunt["creatures"]}
+    score = 0
+    for a in accounts:
+        daily = (a.get("daily") or "").casefold()
+        if daily:
+            score += 3 if daily in there else 0
+        elif any(c.casefold() in there for c in a.get("cards") or []):
+            score += 1
+        paw = (a.get("paw") or "").casefold()
+        if paw:
+            score += 2 if paw in there else 0
+        elif any(c.casefold() in there for c in a.get("paw_options") or []):
+            score += 1
+    return score
+
+
+def best_hunt(hunts, accounts, max_rec, min_level, current=None):
+    """Caça com mais tasks atendidas entre as permitidas (recomendado <= max_rec, minimo <= min_level); empate = a mais
+    forte. A caça atual so' e' trocada se outra atender MAIS tasks (subir de level sozinho nao troca)."""
+    options = [h for h in hunts if (h.get("rec_level") or 1) <= max_rec and (h.get("min_level") or 1) <= min_level]
+    if not options:
+        return None, 0
+    best = max(options, key=lambda h: (hunt_score(h, accounts), h.get("rec_level") or 1, len(h["creatures"])))
+    best_score = hunt_score(best, accounts)
+    now = next((h for h in options if current and h["name"].casefold() == current.casefold()), None)
+    if now is not None and hunt_score(now, accounts) >= best_score:
+        return now["name"], best_score
+    return best["name"], best_score
+
+
+def plan_party_first(accounts, hunts, cfg, current=None):
+    """Party de 4 primeiro (juntas aguentam criaturas mais fortes) e as tasks seguem a caça da party.
+    accounts: [{'name', 'level', 'daily', 'cards', 'paw', 'paw_options'}] (so' as que estao jogando).
+    current: {nome: caça atual do grupo da conta} pra estabilidade. Fora da party (2/3) = solo com caça segura."""
+    party = cfg.get("party") or {}
+    over = cfg.get("tasks", {}).get("group_level_over", 5)
+    by = {a["name"].casefold(): a for a in accounts}
+    current = {k.casefold(): v for k, v in (current or {}).items()}
+    leader = by.get((party.get("leader") or "").casefold())
+    if leader is None and accounts:
+        leader = max(accounts, key=lambda a: a["level"])
+    groups = []
+    members = []
+    if leader is not None and party.get("enabled"):
+        wanted = [m.casefold() for m in party.get("members") or []]
+        members = [leader] + [by[m] for m in wanted if m in by and m != leader["name"].casefold()
+                              and levels_ok([leader["level"], by[m]["level"]])]
+    if len(members) >= 2:
+        fixed = party.get("hunt")
+        hunt = fixed or best_hunt(hunts, members, leader["level"] + over, min(a["level"] for a in members),
+                                  current.get(leader["name"].casefold()))[0]
+        if hunt:
+            groups.append(PlanGroup(hunt, [a["name"] for a in members], "party"))
+    used = {n.casefold() for g in groups for n in g.accounts}
+    for a in accounts:
+        if a["name"].casefold() in used:
+            continue
+        hunt = (cfg.get("tasks", {}).get("solo_hunts") or {}).get(a["name"].casefold()) or \
+            best_hunt(hunts, [a], a["level"], a["level"], current.get(a["name"].casefold()))[0]
+        if hunt:
+            groups.append(PlanGroup(hunt, [a["name"]], "solo"))
+    return groups
+
+
 def _party_phase(accounts, hunts, cfg):
     party = cfg.get("party") or {}
     leader = (party.get("leader") or "").casefold()

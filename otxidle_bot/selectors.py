@@ -87,4 +87,7 @@ TASK_CARD = ".tb-card"                   # .tb-banner b = criatura, .tb-kills "3
 TASK_SELECT = ".tb-select"               # "Selecionar task" / "Em progresso" (disabled) / "COMPLETAR"
 TASK_DIFF = ".tb-diffbtn"                # INICIANTE / ADEPTO / EXPERIENTE / MESTRE (is-on; vale no proximo reroll)
 TASK_REROLL = ".tb-btn.primary"          # REROLAR (gasta 1 token, sem confirmacao)
+PAW_TAB_TEXT = "PAW AND FUR"             # roda em paralelo com a diaria; criatura paga nunca volta
+PAW_ROW = ".pw-row"                      # ".pw-name" = criatura; ativa mostra "0 / 300"
+PAW_BUTTON = ".pw-btn"                   # SELECIONAR TASK / ABANDONAR (COMPLETAR quando cheia: ainda nao visto)
 TASK_TRACKER_TOOL = '.gs-tool[aria-label="Rastreador de Tasks"]'

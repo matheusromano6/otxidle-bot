@@ -114,6 +114,8 @@ class Engine:
         self.city_board = set()       # contas que ja releram o quadro nesta ida a cidade/treino
         self.exercise_try = {}        # conta -> quando pode tentar ligar a arma de exercicio de novo
         self.credentials = None       # logins salvos (aba Login) pra relogar depois do server save
+        self.targets = {}             # conta -> (caça do grupo dela, motivo) do ultimo plano
+        self.current_hunt = {}        # conta -> caça do grupo (estabilidade: so' troca se outra atender mais tasks)
         self.login_busy = set()
         self._warned = set()
 
@@ -254,6 +256,8 @@ class Engine:
             return build_groups(accounts, self.cfg, skip)
         by = {a.name.casefold(): a for a in accounts}
         day = self.memory.tasks_today(task_day(self.cfg))
+        if self.party_first:
+            return self._groups_party_first(accounts, by, day, skip)
         infos = []
         for acc in accounts:
             info = day.get(acc.name.casefold()) or {}
@@ -269,10 +273,39 @@ class Engine:
             groups.append(Group(by[names[0].casefold()], [by[n.casefold()] for n in names[1:]], pg.hunt, pg.reason))
         return groups
 
+    @property
+    def party_first(self):
+        return self.tasks_on and bool(self.cfg["party"].get("enabled"))
+
+    def _groups_party_first(self, accounts, by, day, skip):
+        infos = []
+        for acc in accounts:
+            info = day.get(acc.name.casefold()) or {}
+            infos.append({"name": acc.name, "level": acc.state.level or 1, "daily": info.get("creature"),
+                          "cards": info.get("cards") or [], "paw": info.get("paw"), "paw_options": info.get("paw_options") or []})
+        groups = []
+        for pg in T.plan_party_first(infos, self.hunts, self.cfg, self.current_hunt):
+            names = list(pg.accounts)
+            for name in list(names[1:]):
+                if name.casefold() in skip:            # nao conseguiu entrar na party: caça sozinho, em caça segura
+                    names.remove(name)
+                    me = next(i for i in infos if i["name"] == name)
+                    hunt = T.best_hunt(self.hunts, [me], me["level"], me["level"], self.current_hunt.get(name))[0]
+                    if hunt:
+                        groups.append(Group(by[name.casefold()], hunt=hunt, reason="solo"))
+            groups.append(Group(by[names[0].casefold()], [by[n.casefold()] for n in names[1:]], pg.hunt, pg.reason))
+        self.targets = {a.name: (g.hunt, g.reason) for g in groups for a in g.accounts}
+        for g in groups:
+            for a in g.accounts:
+                if self.current_hunt.get(a.name) != g.hunt:
+                    self.current_hunt[a.name] = g.hunt
+        return groups
+
     def _day_done(self, info):
         if info.get("hunt"):
             return False
-        return info.get("done", 0) >= self.cfg["tasks"]["per_day"] or bool(info.get("stuck"))
+        per_day = self.cfg["tasks"].get("per_day") or 0
+        return (per_day and info.get("done", 0) >= per_day) or bool(info.get("stuck"))
 
     # ---------------------------------------------------------- convites
     def _invites(self, accounts):
@@ -314,17 +347,27 @@ class Engine:
         elif acc.name not in self.city_board:
             need = True                                      # na cidade nao ha rastreador: relê o quadro 1x por visita
             self.city_board.add(acc.name)
+        target = self.targets.get(acc.name, (None, ""))[0] if self.party_first else None
+        if self.party_first:
+            if target and info.get("target") != target:
+                need = True                                  # caça do grupo mudou: tasks/Paw da caça nova
+            if time.time() - info.get("checked_at", 0) > 900:
+                need = True                                  # revisa (Paw and Fur nao tem rastreador)
         if not need:
             return
         board = acc.open_board()
         try:
-            self._board(acc, board, info)
+            self._board(acc, board, info, target)
+            if self.party_first:
+                self._paw(acc, info, target)
         finally:
             acc.close_modals()
         info["checked"] = True
+        info["checked_at"] = time.time()
+        info["target"] = target
         self.memory.set_task(day, acc.name, info)
 
-    def _board(self, acc, board, info):
+    def _board(self, acc, board, info, target=None):
         tcfg = self.cfg["tasks"]
         acc.claim_daily()
         active = board.active
@@ -342,8 +385,11 @@ class Engine:
                 self._warn_once(("nohunt", acc.name, active.creature),
                                 f"{acc.name}: task {active.creature} sem caça possível no level {level} - abandone ou troque")
             return
-        if info.get("done", 0) >= tcfg["per_day"]:
+        if tcfg.get("per_day") and info.get("done", 0) >= tcfg["per_day"]:
             self.log(f"{acc.name}: terminou as {tcfg['per_day']} tasks do dia")
+            return
+        if self.party_first and target:
+            self._pick_for_hunt(acc, board, info, target)
             return
         rerolls = 0
         difficulty = tcfg["difficulty"]
@@ -370,6 +416,60 @@ class Engine:
             info["stuck"] = True
             self.log(f"{acc.name}: nenhuma task boa e sem reroll - fica livre pelo resto do dia")
             return
+
+    def _hunt_creatures(self, hunt):
+        h = next((x for x in self.hunts if x["name"].casefold() == (hunt or "").casefold()), None)
+        return {c.casefold() for c in h["creatures"]} if h else set()
+
+    def _pick_for_hunt(self, acc, board, info, target):
+        """Party primeiro: so' pega carta cuja criatura esta na caça do grupo (senao a task nao anda). Nenhuma serve ->
+        rerola (ate max_rerolls, se tiver token); continua sem -> espera a proxima revisao (caça do grupo pode mudar)."""
+        tcfg = self.cfg["tasks"]
+        there = self._hunt_creatures(target)
+        difficulty = tcfg["difficulty"]
+        rerolls = 0
+        if board.difficulty.casefold() != difficulty.casefold() and board.tokens > 0:
+            board = acc.reroll(difficulty)
+        while True:
+            cards = [c for c in board.cards if c.status == "available" and c.creature.casefold() in there
+                     and c.xp_per_kill >= tcfg.get("min_xp_per_kill", 0)]
+            if cards:
+                card = max(cards, key=lambda c: c.xp_per_kill)
+                got = acc.select_task(card.creature)
+                info.update(creature=got or card.creature, hunt=target, stuck=False, waiting=False)
+                self.log(f"{acc.name}: task {card.creature} ({card.need} abates, {card.xp} XP) - na caça do grupo, {target}")
+                break
+            if board.tokens > 0 and rerolls < tcfg.get("max_rerolls", 2):
+                rerolls += 1
+                board = acc.reroll(difficulty)
+                continue
+            if not info.get("waiting"):
+                self.log(f"{acc.name}: nenhuma task diária de {target} no quadro - espera a próxima revisão")
+            info["waiting"] = True
+            break
+        info["cards"] = [c.creature for c in acc._board_now().cards if c.status == "available"]
+
+    def _paw(self, acc, info, target):
+        """Paw and Fur sempre ativo (roda junto com a diaria): entrega o cheio e pega o da caça do grupo; sem nenhum la',
+        pega o que a conta consegue fazer sozinha numa caça segura (fica pra quando o grupo passar por la')."""
+        paw = acc.open_paw()
+        active = paw["active"]
+        if active and active[2] and active[1] >= active[2]:
+            paw = acc.complete_paw(active[0])
+            active = paw["active"]
+        if not active and paw["options"]:
+            there = self._hunt_creatures(target)
+            level = acc.state.level or 1
+            choice = next((c for c in paw["options"] if c.casefold() in there), None)
+            if choice is None:
+                choice = next((c for c in paw["options"] if T.hunt_for(self.hunts, c, level)), None)
+            if choice:
+                got = acc.select_paw(choice)
+                paw = acc._paw_now()
+                active = paw["active"]
+        info["paw"] = active[0] if active else None
+        info["paw_kills"] = list(active[1:]) if active else None
+        info["paw_options"] = paw["options"]
 
     def _other_tasks(self, acc):
         """[(caça, level)] das tasks em andamento das OUTRAS contas abertas."""

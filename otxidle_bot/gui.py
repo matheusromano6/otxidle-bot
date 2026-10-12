@@ -496,7 +496,7 @@ class App:
         grid = ctk.CTkFrame(tab, fg_color="transparent")
         grid.pack(anchor="nw", padx=14, pady=10)
         self.task_vars = {}
-        rows = (("Tasks por dia (cada conta)", "per_day", "depois disso a conta ajuda as outras / vai pra party"),
+        rows = (("Tasks por dia (cada conta)", "per_day", "0 = sem limite (com party, as tasks seguem a caça da party)"),
                 ("XP mínimo por abate", "min_xp_per_kill", "cartas abaixo disso são ignoradas (ex.: 5 evita ratos)"),
                 ("Rerolls seguidos", "max_rerolls", "procurando carta boa (cada um gasta 1 token)"),
                 ("Hora que o dia vira", "reset_hour", "0 = meia-noite"))

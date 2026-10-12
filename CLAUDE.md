@@ -233,3 +233,15 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   v2.0.10: ajudante prioriza o grupo numa caça ACIMA do level de quem esta nele (tasks.plan / hunt_rec_level). E o lider
   saindo traz a party: o membro ja esta na cidade quando o bot tenta 'Finalizar Hunt' -> finish_hunt agora confere a fase
   (antes dava timeout e pausava a conta 5 min).
+
+## v2.1.0 - party primeiro, tasks seguem a caça da party (12/10/2026)
+- Usuario: 'mesmo com tasks, priorizar a hunt x4 porque podemos ir em criaturas mais fortes'; Paw and Fur e importante;
+  sem cota travando (per_day 0); party de 4 quando acabarem as tasks boas. Caso real: Sorc bateu a cota (2) e caiu na
+  'caça solo de maior recomendado', trocando Barbarian Camp por Daramian Minotaur so por ter subido pro 20, ignorando as
+  cartas (Barbarian Skullhunter, Cyclops) e o Paw.
+- Paw and Fur RODA EM PARALELO com a diaria (testado no Pally: Mummy diaria + Paw Crocodile 0/300). Linha ativa mostra
+  '0 / 300' e o detalhe troca SELECIONAR por ABANDONAR. Botao de entregar o Paw cheio: ainda NAO visto.
+- tasks.plan_party_first: party = lider + membros nos 2/3; caça = best_hunt (hunt_score: diaria ativa 3, Paw ativo 2,
+  carta/opcao de Paw disponivel 1; empate = mais forte; so troca se outra atender MAIS). Fora da party: solo seguro.
+  Engine: _pick_for_hunt (so carta da caça do grupo; senao rerola; senao espera), _paw (entrega cheio, pega o da caça
+  do grupo), revisao a cada 15 min e quando a caça do grupo muda. 'Caça da party' fixa ainda manda (voltei pra Automatica).

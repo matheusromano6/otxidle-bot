@@ -36,7 +36,7 @@ DEFAULTS = {
     # juntas; quem termina ajuda quem falta (helpers); quando TODAS terminam, vai a party configurada pra party.hunt
     "tasks": {
         "enabled": True,
-        "per_day": 2,
+        "per_day": 0,                     # 0 = sem cota (com party: as tasks seguem a caça da party)
         "difficulty": "Adepto",
         "helpers": True,
         "min_xp_per_kill": 0,             # ignora cartas que pagam menos XP por abate (ex.: ratos)

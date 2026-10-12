@@ -484,6 +484,64 @@ class Account:
         finally:
             self.close_modals()
 
+    # ------------------------------------------------------- Paw and Fur
+    # Aba PAW AND FUR do quadro: roda EM PARALELO com a task diaria (confirmado ao vivo). Lista `.pw-row`
+    # ("Crocodile" / ativa: "Crocodile\n0 / 300"); detalhe com `.pw-btn` SELECIONAR TASK / ABANDONAR (/ COMPLETAR).
+    PAW_JS = r"""() => { const m = [...document.querySelectorAll('.gm-modal')].pop(); if (!m) return null;
+      const rows = [...m.querySelectorAll('.pw-row')].map(r => { const lines = (r.innerText || '').split('\n').map(x => x.trim()).filter(x => x);
+        return { name: (r.querySelector('.pw-name')?.textContent || lines[0] || '').trim(), count: lines.slice(1).join(' ') }; });
+      return { rows, button: (m.querySelector('.pw-btn')?.innerText || '').trim() }; }"""
+
+    def _paw_now(self):
+        raw = self.page.evaluate(self.PAW_JS) or {}
+        active, options = None, []
+        for row in raw.get("rows") or []:
+            m = re.search(r"([\d.,]+)\s*/\s*([\d.,]+)", row.get("count") or "")
+            if m:
+                active = (row["name"], parse_int(m.group(1)) or 0, parse_int(m.group(2)) or 0)
+            elif row.get("name"):
+                options.append(row["name"])
+        return {"active": active, "options": options}
+
+    def open_paw(self):
+        """Quadro ja aberto -> aba PAW AND FUR. Retorna {'active': (criatura, abates, precisa) ou None, 'options': [...]}."""
+        tab = self.page.locator(S.MODAL + " " + S.TASK_TAB, has_text=S.PAW_TAB_TEXT).first
+        self._click(tab)
+        time.sleep(0.8)
+        return self._paw_now()
+
+    def _paw_row(self, creature):
+        rows = self.page.locator(S.MODAL + " " + S.PAW_ROW)
+        for i in range(rows.count()):
+            if (rows.nth(i).locator(".pw-name").text_content() or rows.nth(i).inner_text()).strip().casefold() == creature.casefold():
+                return rows.nth(i)
+        raise GameError(f"Paw and Fur sem {creature}")
+
+    def complete_paw(self, creature):
+        self._click(self._paw_row(creature))
+        time.sleep(0.5)
+        button = self.page.locator(S.MODAL + " " + S.PAW_BUTTON, has_text="COMPLETAR")
+        if not button.count():
+            button = self.page.locator(S.MODAL + " button", has_text=re.compile("COMPLETAR|ENTREGAR|COLETAR", re.I))
+        if not button.count():
+            raise GameError(f"Paw and Fur {creature} cheio mas sem botão de entregar")
+        self._click(button.first)
+        time.sleep(1.2)
+        self.log(f"{self.name}: entregou o Paw and Fur {creature}")
+        return self._paw_now()
+
+    def select_paw(self, creature):
+        self._click(self._paw_row(creature))
+        time.sleep(0.5)
+        self._click(self.page.locator(S.MODAL + " " + S.PAW_BUTTON, has_text="SELECIONAR").first)
+        time.sleep(1)
+        got = self._paw_now()["active"]
+        if got and got[0].casefold() == creature.casefold():
+            self.log(f"{self.name}: pegou o Paw and Fur {creature} ({got[2]} abates)")
+        else:
+            self.log(f"{self.name}: ATENÇÃO - tentou o Paw and Fur {creature} mas ficou {got[0] if got else 'nenhum'}")
+        return got[0] if got else None
+
     def _card_button(self, creature):
         card = self.page.locator(S.MODAL + " " + S.TASK_CARD).filter(
             has=self.page.locator(".tb-banner b", has_text=re.compile(r"^\s*" + re.escape(creature) + r"\s*$", re.I)))

@@ -132,6 +132,30 @@ class FakeAccount:
     def claim_daily(self):
         return False
 
+    paw = None
+
+    def open_paw(self):
+        self.actions.append("paw")
+        return self._paw_now()
+
+    def _paw_now(self):
+        p = self.paw or {"active": None, "options": []}
+        return {"active": p["active"], "options": list(p["options"])}
+
+    def select_paw(self, creature):
+        self.actions.append(f"paw:{creature}")
+        self.paw["options"].remove(creature)
+        self.paw["active"] = (creature, 0, 300)
+        return creature
+
+    def complete_paw(self, creature):
+        self.actions.append(f"paw_done:{creature}")
+        self.paw["active"] = None
+        return self._paw_now()
+
+    def _board_now(self):
+        return self.board
+
     def dismiss_gates(self):
         self.actions.append("gates")
         self.state.notes, self.state.death = False, ""
@@ -451,6 +475,54 @@ class TasksLogicTest(unittest.TestCase):
         self.assertEqual((groups[1].accounts, groups[1].reason), (["Baixo"], "solo"))
 
 
+TOMB = {"name": "Tomb Floor II", "rec_level": 20, "min_level": 16, "creatures": ["Mummy", "Crypt Shambler", "Skeleton"]}
+MINO = {"name": "Daramian Minotaur Pyramid", "rec_level": 20, "min_level": 16, "creatures": ["Minotaur", "Minotaur Archer"]}
+BARB = {"name": "Barbarian Camp", "rec_level": 19, "min_level": 15, "creatures": ["Barbarian Skullhunter"]}
+
+
+class PartyFirstTest(unittest.TestCase):
+    def test_party_hunt_by_tasks(self):
+        hunts = HUNTS + [TOMB, MINO, BARB]
+        cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["pally", "druid", "sorc"], "hunt": ""})
+        accs = [{"name": "Kina", "level": 24, "daily": None, "cards": ["Minotaur Archer", "Skeleton"], "paw": None, "paw_options": []},
+                {"name": "Pally", "level": 16, "daily": "Mummy", "cards": [], "paw": None, "paw_options": []},
+                {"name": "Druid", "level": 18, "daily": "Crypt Shambler", "cards": [], "paw": None, "paw_options": []},
+                {"name": "Sorc", "level": 20, "daily": None, "cards": ["Barbarian Skullhunter", "Skeleton"], "paw": None, "paw_options": []}]
+        groups = T.plan_party_first(accs, hunts, cfg)
+        self.assertEqual((groups[0].hunt, groups[0].accounts, groups[0].reason), ("Tomb Floor II", ["Kina", "Pally", "Druid", "Sorc"], "party"))
+        # estavel: a atual so' troca se outra atender MAIS tasks
+        self.assertEqual(T.best_hunt(hunts, accs, 29, 16, current="Tomb Floor II")[0], "Tomb Floor II")
+        accs[1]["daily"] = accs[2]["daily"] = None
+        accs[3]["cards"] = ["Barbarian Skullhunter"]           # empate Tomb (Skeleton da Kina) x Minotaur (Archer da Kina)
+        self.assertEqual(T.best_hunt(hunts, accs, 29, 16, current="Daramian Minotaur Pyramid")[0], "Daramian Minotaur Pyramid")
+        accs[3]["cards"] = ["Skeleton"]                         # agora a Tomb atende mais: troca
+        self.assertEqual(T.best_hunt(hunts, accs, 29, 16, current="Daramian Minotaur Pyramid")[0], "Tomb Floor II")
+
+    def test_member_outside_two_thirds_goes_solo_safe(self):
+        hunts = HUNTS + [TOMB]
+        cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["baixo"], "hunt": ""})
+        accs = [{"name": "Kina", "level": 24, "daily": "Mummy"}, {"name": "Baixo", "level": 9, "daily": "Troll"}]
+        groups = T.plan_party_first(accs, hunts, cfg)
+        self.assertEqual([(g.hunt, g.accounts) for g in groups], [("Tomb Floor II", ["Kina"]), ("Troll Hills", ["Baixo"])])
+
+    def test_tasks_follow_party_hunt_and_paw(self):
+        w = World()
+        kina = FakeAccount(w, "Kina", level=24, hunt="Tomb Floor II", board=board("Orc", 183, 183))
+        kina.paw = {"active": None, "options": ["Crocodile", "Mummy"]}
+        eng = engine_for(w, make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": [], "hunt": ""}))
+        eng.hunts = HUNTS + [TOMB]
+        eng.targets = {"Kina": ("Tomb Floor II", "party")}
+        eng.party_first or self.fail("party_first")
+        info = {}
+        eng._board(kina, kina.open_board(), info, "Tomb Floor II")
+        # entregou, as cartas novas (Rat/Troll/Cave Rat) nao sao da Tomb -> rerola -> (Orc/Swampling/Orc Warrior) tambem nao
+        self.assertEqual(kina.actions[:3], ["board", "complete:Orc", "reroll:Adepto"])
+        self.assertTrue(info["waiting"])
+        eng._paw(kina, info, "Tomb Floor II")
+        self.assertIn("paw:Mummy", kina.actions)                     # Paw da caça do grupo
+        self.assertEqual(info["paw"], "Mummy")
+
+
 class EngineTasksTest(unittest.TestCase):
     def test_completes_rerolls_and_picks_while_hunting(self):
         w = World()
@@ -489,7 +561,7 @@ class EngineTasksTest(unittest.TestCase):
         kina = FakeAccount(w, "Kina", level=13, hunt="Orc Camp", board=board("Orc", 10, 183))
         pally = FakeAccount(w, "Pally", level=11, hunt="Orc Camp", board=board("Orc Warrior", 5, 118))
         w.parties["Kina"] = ["Pally"]
-        eng = engine_for(w, make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": [], "hunt": ""}))
+        eng = engine_for(w, make_cfg(tasks=True, party={"enabled": False, "leader": "kina", "members": [], "hunt": ""}))
         eng.tick()
         self.assertNotIn("finish", kina.actions)                    # plano bate com a realidade
         pally.board = board("Troll", 0, 90)                         # Pally trocou de task: Troll Hills
