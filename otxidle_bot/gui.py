@@ -12,6 +12,7 @@ from tkinter import ttk
 import customtkinter as ctk
 
 from . import VERSION, config, tasks, updater
+from .credentials import Credentials
 from .memory import Memory
 from .paths import app_dir, resource_dir
 from .runner import Runner
@@ -66,13 +67,14 @@ class App:
         self.tabs = ctk.CTkTabview(root, fg_color=PANEL, segmented_button_selected_color=ACCENT,
                                    segmented_button_selected_hover_color=ACCENT_HOVER, text_color="#1a0d00")
         self.tabs.pack(fill="both", expand=True, padx=14, pady=(0, 14))
-        for name in ("Contas", "Regras", "Tasks", "Party", "Treino", "Log"):
+        for name in ("Contas", "Regras", "Tasks", "Party", "Treino", "Login", "Log"):
             self.tabs.add(name)
         self._build_accounts(self.tabs.tab("Contas"))
         self._build_rules(self.tabs.tab("Regras"))
         self._build_tasks(self.tabs.tab("Tasks"))
         self._build_party(self.tabs.tab("Party"))
         self._build_training(self.tabs.tab("Treino"))
+        self._build_login(self.tabs.tab("Login"))
         self._build_log(self.tabs.tab("Log"))
 
         root.protocol("WM_DELETE_WINDOW", self.request_close)
@@ -573,6 +575,64 @@ class App:
             by_name[key] = value
         self.save()
         self.log(f"treino de {key}: {value}")
+
+    # ----------------------------------------------------------------- login
+    def _build_login(self, tab):
+        self.credentials = Credentials(os.path.join(ROOT, "credentials.json"))
+        ctk.CTkLabel(tab, text="Logins do OtxIdle pra o bot entrar sozinho quando o jogo deslogar (server save às 00h). "
+                               "Cadastre um login por conta. A senha fica criptografada pelo Windows neste PC "
+                               "(credentials.json só abre no seu usuário) e nunca aparece no log.",
+                     text_color=MUTED, wraplength=840, justify="left").pack(anchor="w", padx=14, pady=(14, 8))
+        form = ctk.CTkFrame(tab, fg_color="transparent")
+        form.pack(anchor="w", padx=14, pady=4)
+        ctk.CTkLabel(form, text="Usuário", text_color=TEXT).grid(row=0, column=0, sticky="w", padx=(0, 8))
+        self.login_user = tk.StringVar()
+        ctk.CTkEntry(form, textvariable=self.login_user, width=200, fg_color=PANEL_ALT).grid(row=0, column=1, padx=(0, 16))
+        ctk.CTkLabel(form, text="Senha", text_color=TEXT).grid(row=0, column=2, sticky="w", padx=(0, 8))
+        self.login_pass = tk.StringVar()
+        ctk.CTkEntry(form, textvariable=self.login_pass, width=200, show="•", fg_color=PANEL_ALT).grid(row=0, column=3, padx=(0, 16))
+        ctk.CTkButton(form, text="Salvar login", command=self._save_login, fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      text_color="#1a0d00").grid(row=0, column=4)
+        self.login_msg = ctk.CTkLabel(tab, text="", text_color=MUTED)
+        self.login_msg.pack(anchor="w", padx=14)
+        self.login_list = ctk.CTkFrame(tab, fg_color=PANEL_ALT)
+        self.login_list.pack(fill="x", padx=14, pady=8)
+        self._refresh_logins()
+
+    def _refresh_logins(self):
+        for child in self.login_list.winfo_children():
+            child.destroy()
+        names = self.credentials.usernames()
+        if not names:
+            ctk.CTkLabel(self.login_list, text="Nenhum login salvo.", text_color=MUTED).pack(anchor="w", padx=10, pady=8)
+            return
+        for name in names:
+            line = ctk.CTkFrame(self.login_list, fg_color="transparent")
+            line.pack(fill="x", padx=10, pady=3)
+            ctk.CTkLabel(line, text=f"{name}   ••••••", text_color=TEXT, width=300, anchor="w").pack(side="left")
+            ctk.CTkButton(line, text="Remover", width=80, fg_color=PANEL, hover_color=BORDER, text_color=TEXT,
+                          command=lambda n=name: self._remove_login(n)).pack(side="left")
+
+    def _save_login(self):
+        user, password = self.login_user.get().strip(), self.login_pass.get()
+        if not user or len(password) < 6:
+            self.login_msg.configure(text="Preencha o usuário e a senha (mínimo 6 caracteres).", text_color=DANGER)
+            return
+        try:
+            self.credentials.save(user, password)
+        except Exception as error:
+            self.login_msg.configure(text=f"Não consegui salvar: {error}", text_color=DANGER)
+            return
+        self.login_user.set("")
+        self.login_pass.set("")
+        self.login_msg.configure(text=f"Login {user} salvo.", text_color=ACCENT)
+        self.log(f"login salvo: {user}")
+        self._refresh_logins()
+
+    def _remove_login(self, name):
+        self.credentials.remove(name)
+        self.log(f"login removido: {name}")
+        self._refresh_logins()
 
     # ------------------------------------------------------------------- log
     def _build_log(self, tab):

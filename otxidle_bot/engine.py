@@ -113,6 +113,8 @@ class Engine:
         self.expected_leader = {}     # conta -> lider do grupo dela (aceita convite so' dele)
         self.city_board = set()       # contas que ja releram o quadro nesta ida a cidade/treino
         self.exercise_try = {}        # conta -> quando pode tentar ligar a arma de exercicio de novo
+        self.credentials = None       # logins salvos (aba Login) pra relogar depois do server save
+        self.login_busy = set()
         self._warned = set()
 
     # ---------------------------------------------------------------- loop
@@ -143,8 +145,52 @@ class Engine:
     def tasks_on(self):
         return bool(self.cfg["tasks"].get("enabled"))
 
+    def _relogin(self):
+        """Paginas fora do jogo (sem nome): site -> /play/; login -> usa um login salvo que nao esta em uso."""
+        if not self.credentials:
+            return
+        out = [a for a in self.accounts if a.state.phase in ("site", "login")]
+        if not out:
+            return
+        if time.time() < self.cooldown.get("login", 0):
+            return
+        for acc in out:
+            if acc.state.phase == "site":
+                self._safe("login", acc.open_play, [acc])
+        for acc in out:
+            st = acc.read()
+            if st.phase != "login":
+                continue
+            if st.updating:
+                self._warn_once(("updating", int(time.time() // 600)), "servidor atualizando (server save) - tento logar de novo em 1 min")
+                self.cooldown["login"] = time.time() + 60
+                return
+            in_use = {self.memory.login_of(a.name) for a in self.accounts if a.name and a.state.phase not in ("site", "login")}
+            free = [u for u in self.credentials.usernames() if u not in in_use and u not in self.login_busy]
+            if not free:
+                self._warn_once(("nologin", len(out)), "há aba fora do jogo e nenhum login salvo livre - cadastre na aba Login")
+                return
+            before = self.memory.login_of(acc.name) if acc.name else None    # o login que esta aba usava
+            username = before if before in free else free[0]
+            self.login_busy.add(username)
+            try:
+                if acc.login_with(username, self.credentials.get(username)):
+                    st = acc.read()
+                    if st.name:
+                        self.memory.set_login_of(st.name, username)
+                else:
+                    self.cooldown["login"] = time.time() + 60
+                    return
+            except Exception as error:
+                self.log(f"login falhou: {error}")
+                self.cooldown["login"] = time.time() + 60
+                return
+            finally:
+                self.login_busy.discard(username)
+
     def tick(self):
         states = self.read_all()
+        self._relogin()
         for acc in [a for a in self.accounts if a.name in states and a.state.phase == "offline"]:
             if time.time() >= self.cooldown.get(acc.name, 0):
                 self._safe(acc.name, acc.login, [acc])          # o jogo derrubou: entra de novo
@@ -302,7 +348,10 @@ class Engine:
             # nenhuma carta junta com outra conta: rerola tentando juntar (cada task devolve 1 token)
             if pick and (pick[2] or not others or not can_reroll):
                 card, hunt, together = pick
-                acc.select_task(card.creature)
+                got = acc.select_task(card.creature)
+                if got and got.casefold() != card.creature.casefold():      # o jogo ficou com outra carta
+                    info.update(creature=got, hunt=self._active_hunt(got, level, others), stuck=False)
+                    return
                 info.update(creature=card.creature, hunt=hunt, stuck=False)
                 self.log(f"{acc.name}: task {card.creature} ({card.need} abates, {card.xp} XP) em {hunt}"
                          + (" - junto com outra conta" if together else " - sozinho"))

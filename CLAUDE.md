@@ -205,3 +205,15 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   `.ob-status.is-offline`, `.ob-center-cta button` 'JOGAR AGORA' -> cidade em ~1s). Ao entrar pode abrir `.gm-modal` 'PROMOÇÃO POR
   TEMPO LIMITADO' com botao 'Entendi' (so informativo). v2.0.5: fase 'offline' -> login automatico + fecha o aviso.
 - `OtxIdleBot.exe --iniciar` abre ja rodando (usado pra reiniciar o bot remotamente).
+
+## Server save e relogin (12/10/2026 00:03, ao vivo)
+- No server save as paginas vao pra PAGINA INICIAL do site (`otxidle.com.br/`, botao JOGAR -> `/play/`). Em `/play/` aparece o
+  login: `input[name=username]`, `input[name=password]`, checkbox 'Salvar login' (marcado, mas os campos vem VAZIOS depois do
+  save), `button[type=submit]` LOGIN e o aviso 'The server is being updated. Please sign in again in a moment.' enquanto atualiza.
+- v2.0.6: aba Login (usuario/senha criptografados com DPAPI em credentials.json - NUNCA commitar, esta no .gitignore);
+  Engine._relogin: site -> /play/, login com um usuario salvo livre (memory 'logins' = personagem -> usuario, nunca o
+  mesmo usuario em 2 abas), espera 1 min se 'server is being updated'; depois tela de personagens -> JOGAR AGORA.
+- Claude NAO digita senha de conta real: o usuario cadastra na aba Login.
+- BUG achado 00:00: depois de completar/rerolar o bot lia as cartas cedo demais (lista velha) e o clique caia em OUTRA carta
+  (Druid ficou com Marsh Stalker, Sorc com Tarantula achando que era Valkyrie). v2.0.6 espera as cartas mudarem e confere
+  a task ativa depois de selecionar.

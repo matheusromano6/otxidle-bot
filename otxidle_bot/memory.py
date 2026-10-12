@@ -53,6 +53,15 @@ class Memory:
         self.data["tasks"] = tasks
         self._save()
 
+    # personagem -> login (usuario) usado pra entrar: nunca logar o mesmo usuario em 2 abas
+    def login_of(self, name):
+        return (self.data.get("logins") or {}).get((name or "").casefold())
+
+    def set_login_of(self, name, username):
+        if self.login_of(name) != username:
+            self.data.setdefault("logins", {})[name.casefold()] = username
+            self._save()
+
     def seen(self):
         """{minusculas: {'name', 'vocation', 'level'}} das contas ja lidas (a interface usa com o bot parado)."""
         return dict(self.data.get("accounts") or {})

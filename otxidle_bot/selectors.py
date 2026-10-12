@@ -17,6 +17,14 @@ OFFLINE_NAME = ".ob-hero-name"           # nome do personagem selecionado
 PLAY_NOW = ".ob-center-cta button"       # "JOGAR AGORA" -> cidade em ~1s
 NOTICE_OK_TEXT = "Entendi"               # aviso ao entrar (ex.: "PROMOÇÃO POR TEMPO LIMITADO") - so' informativo
 
+# --- fora do jogo (server save): pagina inicial do site -> /play/ -> tela de login
+PLAY_URL = "https://otxidle.com.br/play/"
+LOGIN_USER = 'input[name="username"]'
+LOGIN_PASS = 'input[name="password"]'
+LOGIN_SAVE = 'input[type="checkbox"]'    # "Salvar login" (o server save apaga mesmo assim)
+LOGIN_SUBMIT = 'button[type="submit"]'   # "LOGIN"
+SERVER_UPDATING = "server is being updated"   # "The server is being updated. Please sign in again in a moment."
+
 # --- caçando
 HUNT_PANEL = "section.hb-panel"          # "Caçando / <nome> / Tempo de caça ..."
 HUNT_NAME = "section.hb-panel .gs-panelhead p"

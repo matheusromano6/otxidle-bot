@@ -5,6 +5,7 @@ import threading
 
 from .engine import Engine
 from .idledeck import Pool
+from .credentials import Credentials
 from .memory import Memory
 from .paths import app_dir
 
@@ -45,6 +46,7 @@ class Runner:
             self.connected = True
             self.engine = Engine(pool.refresh(), self.cfg, self.log, refresh=pool.refresh,
                                  memory=Memory(os.path.join(ROOT, "memory.json")))
+            self.engine.credentials = Credentials(os.path.join(ROOT, "credentials.json"))
             self.log("bot iniciado")
             self.engine.run(self.stop_event)
         except Exception as error:

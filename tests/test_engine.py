@@ -152,6 +152,7 @@ class FakeAccount:
         for card in self.board.cards:
             if card.creature == creature:
                 card.status = "progress"
+        return creature
 
 
 def make_cfg(tasks=False, **changes):
@@ -310,6 +311,36 @@ class EngineV1Test(unittest.TestCase):
         acc.login = lambda: (acc.actions.append("login"), setattr(acc.state, "phase", "city"))
         engine_for(w, make_cfg(default_hunt="Troll Hills")).tick()
         self.assertEqual(acc.actions, ["login"])
+
+    def test_relogin_after_server_save(self):
+        w = World()
+        on = FakeAccount(w, "Online")
+        out = FakeAccount(w, "Fora")
+        out.state.phase = "site"
+        out.state.name = ""
+
+        class Creds:
+            def usernames(self):
+                return ["login_a", "login_b"]
+
+            def get(self, user):
+                return "x" * 8
+
+        def open_play():
+            out.actions.append("open_play")
+            out.state.phase = "login"
+
+        def login_with(user, password):
+            out.actions.append(f"login:{user}")
+            out.state.phase, out.state.name = "offline", "Fora"
+            return True
+        out.open_play, out.login_with = open_play, login_with
+        eng = engine_for(w, make_cfg())
+        eng.memory.set_login_of("Online", "login_a")              # login_a ja esta em uso na outra aba
+        eng.credentials = Creds()
+        eng.tick()
+        self.assertEqual(out.actions[:2], ["open_play", "login:login_b"])
+        self.assertEqual(eng.memory.login_of("Fora"), "login_b")
 
     def test_invite_from_stranger_ignored(self):
         w = World()

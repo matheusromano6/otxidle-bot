@@ -18,6 +18,9 @@ READ_JS = r"""() => {
   return {
     name: txt('.gs-me .name') || txt('.ob-hero-name'), level: txt('.gs-me .lvl'), vocation: txt('.gs-right .voc'),
     offline: vis(q('.ob-center-cta button')) && !q('.gs-me .name'),
+    login: vis(q('input[name="username"]')),
+    site: !location.pathname.startsWith('/play'),
+    updating: /server is being updated/i.test(document.body.innerText.slice(0, 3000)),
     cap: txt('.gs-goldrow .cap'), gold: txt('.gs-goldrow .gold'),
     stamina_hunt: stam('.ta-bar[aria-label="Stamina de caça restante"]'),
     stamina_train: stam('.ta-bar[aria-label="Stamina de treino restante"]'),
@@ -62,7 +65,8 @@ class State:
     name: str = ""
     level: int = 0
     vocation: str = ""
-    phase: str = "unknown"          # hunting / leaving / city / training / offline / unknown
+    phase: str = "unknown"          # hunting / leaving / city / training / offline / login / site / unknown
+    updating: bool = False          # tela de login avisando que o servidor esta atualizando (server save)
     hunt_name: str = ""
     cap_free: int = None
     cap_max: int = None
@@ -90,7 +94,12 @@ def build_state(raw, cap_max=None):
                cap_free=parse_int(raw.get("cap")), cap_max=cap_max, gold=parse_int(raw.get("gold")),
                stamina_hunt=parse_hm(raw.get("stamina_hunt")), stamina_train=parse_hm(raw.get("stamina_train")),
                party_size=parse_party(raw.get("party")), modals=list(raw.get("modals") or []))
-    if raw.get("offline"):
+    st.updating = bool(raw.get("updating"))
+    if raw.get("site"):
+        st.phase = "site"
+    elif raw.get("login"):
+        st.phase = "login"
+    elif raw.get("offline"):
         st.phase = "offline"
     elif raw.get("hunting"):
         st.phase = "leaving" if any(b.startswith(S.LEAVING_TEXT) for b in raw.get("hunt_buttons") or []) else "hunting"
@@ -196,6 +205,24 @@ class Account:
         if not ok:
             raise GameError("não entrou no jogo")
         self.log(f"{self.name}: estava deslogado - entrou no jogo de novo")
+
+    def open_play(self):
+        """Pagina inicial do site (o server save joga pra la') -> /play/ (tela de login ou personagens)."""
+        self.page.goto(S.PLAY_URL, wait_until="domcontentloaded")
+        time.sleep(2)
+
+    def login_with(self, username, password):
+        """Tela de login: preenche usuario/senha salvos (a senha nunca vai pro log) e clica LOGIN.
+        Retorna True se chegou na tela de personagens."""
+        self.page.locator(S.LOGIN_USER).fill(username)
+        self.page.locator(S.LOGIN_PASS).fill(password)
+        save = self.page.locator(S.LOGIN_SAVE)
+        if save.count() and not save.first.is_checked():
+            save.first.check()
+        self._click(self.page.locator(S.LOGIN_SUBMIT).first)
+        ok = self._wait(lambda: self.read().phase in ("offline", "city", "hunting", "training"), 20, 1)
+        self.log(f"login {username}: " + ("ok" if ok else "não entrou (servidor atualizando ou senha errada?)"))
+        return ok
 
     def dismiss_notices(self):
         """Fecha avisos que so' tem 'Entendi' (promoção etc.). Nunca clica em compra."""
@@ -385,12 +412,27 @@ class Account:
             has=self.page.locator(".tb-banner b", has_text=re.compile(r"^\s*" + re.escape(creature) + r"\s*$", re.I)))
         return card.first.locator(S.TASK_SELECT)
 
+    def _board_now(self):
+        return T.parse_board(self.page.evaluate(self.BOARD_JS) or {})
+
+    def _wait_new_cards(self, before, timeout=6):
+        """Espera o quadro trocar as cartas (completar/rerolar): ler cedo demais pega a lista VELHA e o clique cai
+        na carta nova da mesma posicao (aconteceu ao vivo: pegou Marsh Stalker/Tarantula achando que era Valkyrie)."""
+        old = [(c.creature, c.status) for c in before.cards]
+        end = time.time() + timeout
+        board = self._board_now()
+        while time.time() < end and [(c.creature, c.status) for c in board.cards] == old:
+            time.sleep(0.4)
+            board = self._board_now()
+        time.sleep(0.4)
+        return self._board_now()
+
     def complete_task(self, creature):
         """Card cheio mostra COMPLETAR: entrega na hora (XP, bounty, +1 token e 3 cartas novas). Board ja aberto."""
+        before = self._board_now()
         self._click(self._card_button(creature))
-        time.sleep(1)
         self.log(f"{self.name}: entregou a task {creature}")
-        return T.parse_board(self.page.evaluate(self.BOARD_JS) or {})
+        return self._wait_new_cards(before)
 
     def reroll(self, difficulty):
         """Marca a dificuldade e REROLA (gasta 1 token, 3 cartas novas dela). Board ja aberto."""
@@ -399,16 +441,31 @@ class Account:
             raise GameError(f"dificuldade {difficulty} bloqueada")
         self._click(diff)
         time.sleep(0.4)
+        before = self._board_now()
         self._click(self.page.locator(S.MODAL + " " + S.TASK_REROLL).first)
-        time.sleep(1)
-        board = T.parse_board(self.page.evaluate(self.BOARD_JS) or {})
+        board = self._wait_new_cards(before)
         self.log(f"{self.name}: rerolou as tasks ({difficulty}): {', '.join(c.creature for c in board.cards)}")
         return board
 
     def select_task(self, creature):
+        """Seleciona e CONFERE: retorna a criatura que ficou ativa de verdade (None se nenhuma)."""
+        board = self._board_now()
+        if not any(c.creature.casefold() == creature.casefold() and c.status == "available" for c in board.cards):
+            raise GameError(f"carta {creature} não está mais no quadro")
         self._click(self._card_button(creature))
-        time.sleep(0.8)
-        self.log(f"{self.name}: pegou a task {creature}")
+        end = time.time() + 5
+        active = None
+        while time.time() < end:
+            time.sleep(0.4)
+            active = self._board_now().active
+            if active:
+                break
+        got = active.creature if active else None
+        if got and got.casefold() == creature.casefold():
+            self.log(f"{self.name}: pegou a task {creature}")
+        else:
+            self.log(f"{self.name}: ATENÇÃO - tentou pegar {creature} mas ficou {got or 'nenhuma'}")
+        return got
 
     def show_task_tracker(self):
         """Mostra o 'Rastreador de Tasks' na caça (alterna com o de Bestiary/Prey) pra ler o progresso sem abrir janela."""
