@@ -400,6 +400,21 @@ class EngineV1Test(unittest.TestCase):
         eng.tick()
         self.assertEqual(acc.actions, ["reload"])
 
+    def test_party_waits_for_member_coming_back(self):
+        w = World()
+        kina = FakeAccount(w, "Kina", hunt="Troll Hills")
+        um = FakeAccount(w, "Um", phase="offline")
+        um.login = lambda: um.actions.append("login")         # continua fora (servidor caiu de novo)
+        eng = engine_for(w, make_cfg(party={"enabled": True, "leader": "kina", "members": ["um"], "hunt": "Troll Hills"}))
+        eng.tick()
+        self.assertEqual(kina.actions, ["finish"])              # nao caça sozinha: espera na cidade
+        eng.tick()
+        self.assertEqual(kina.actions, ["finish"])
+        eng.party_wait_since -= 601                            # 10 min: segue com quem esta online
+        eng.ours.add("Kina")
+        eng.tick()
+        self.assertIn("hunt:Orc Camp", kina.actions)           # sozinha: caça segura pro level dela
+
     def test_invite_from_stranger_ignored(self):
         w = World()
         acc = FakeAccount(w, "Um")

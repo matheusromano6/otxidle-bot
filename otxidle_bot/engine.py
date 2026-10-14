@@ -118,6 +118,7 @@ class Engine:
         self.refresh_hunts_every = 20 * 3600   # relê a lista de caças do jogo (caças novas) a cada 20h
         self.blocked_hunts = {}       # caça -> ate quando nao tentar (o jogo nao deixou a party toda entrar)
         self.unknown_since = {}       # pagina -> desde quando esta em erro/tela desconhecida
+        self.party_wait_since = None  # desde quando a party espera um membro voltar (erro/login)
         self.reload_at = {}           # pagina -> quando pode recarregar de novo
         self.current_hunt = {}        # conta -> caça do grupo (estabilidade: so' troca se outra atender mais tasks)
         self.login_busy = set()
@@ -255,10 +256,34 @@ class Engine:
         for acc in training:
             if time.time() >= self.cooldown.get(acc.name, 0):      # falhou ha pouco: espera a pausa (antes repetia a cada ciclo)
                 self._safe(acc.name, lambda acc=acc: self._train(acc), [acc])
+        if self._party_waiting(accounts):
+            return
         for group in groups:
             if time.time() < self.cooldown.get(group.label, 0):
                 continue
             self._safe(group.label, lambda group=group: self._group(group), group.accounts)
+
+    def _party_waiting(self, online):
+        """Party: algum membro configurado ainda voltando (erro, login, tela de personagens) -> as que ja estao online NAO
+        caçam sozinhas (a Kina morreu assim no relogin): saem da caça e esperam na cidade, ate 10 min. Retorna True = esperar."""
+        party = self.cfg["party"]
+        if not party.get("enabled"):
+            return False
+        wanted = {n.casefold() for n in [party.get("leader") or ""] + list(party.get("members") or []) if n}
+        here = {a.name.casefold() for a in online}
+        away = [a for a in self.accounts if a.name and a.name.casefold() in wanted and a.name.casefold() not in here]
+        if not away:
+            self.party_wait_since = None
+            return False
+        self.party_wait_since = self.party_wait_since or time.time()
+        if time.time() - self.party_wait_since > 600:
+            return False                       # 10 min: segue com quem esta online
+        for acc in online:
+            if acc.name.casefold() in wanted and acc.state.phase == "hunting" and acc.state.party_size < len(wanted):
+                self._warn_once(("wait", acc.name, int(self.party_wait_since)),
+                                f"{acc.name}: esperando {', '.join(a.name for a in away)} voltar - sai da caça e espera na cidade")
+                self._safe(acc.name, acc.finish_hunt, [acc])
+        return True
 
     def _safe(self, label, fn, accounts=()):
         try:

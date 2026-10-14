@@ -284,3 +284,5 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - v2.4.2: fase 'error' (Cloudflare / Error 10xx / Bad Gateway / ERR_ / pagina em branco, sem nome do jogo) -> Account.reload
   (goto /play/) na hora e a cada 1 min; fase 'unknown' por > 2 min tambem recarrega (Engine._recover_pages). Depois o fluxo
   normal: login -> JOGAR AGORA -> NOVIDADES -> party -> caça.
+- v2.4.3: party ligada e algum membro ainda voltando (erro/login/personagens) -> as online NAO caçam sozinhas: saem da caça
+  e esperam na cidade ate 10 min (Engine._party_waiting); depois seguem com quem esta online (solo = caça segura do level).
