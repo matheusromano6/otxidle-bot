@@ -271,3 +271,9 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   e MIN <= level do LIDER (`party.min_by_leader`, padrao true). Se algum membro nao entrar (so o lider caçando), o bot
   bloqueia a caça 6h (Engine.blocked_hunts / _check_party_entered) e vai pra proxima. Lider 26: Dwarf Mines / Corym Caves (30/24).
 - Lista relida 15:58: as mesmas 158 caças (nenhuma nova); Corym Caves ja existia (rec 30, min 24).
+
+## 14/10/2026 - tela de personagens 'TREINANDO' e botao traduzido
+- O treino CONTINUA com a conta deslogada: a tela 'OS SEUS PERSONAGENS' mostra status 'TREINANDO' (antes 'OFFLINE'); JOGAR AGORA
+  cai direto no treino. O jogo TRADUZIU o botao: 'End Training' -> 'Finalizar Training' (END_TRAIN_TEXT agora e regex).
+  Exercise: aria 'Usar Exercise Club para treinar'; depois de relogar o painel volta pra 'Arma: Só no boneco' (o bot religa).
+- 06:40 o bot falhou a cada ~30s procurando 'End Training' (o _train nao respeitava a pausa de falha): corrigido em v2.4.1.

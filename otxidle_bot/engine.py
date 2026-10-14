@@ -228,7 +228,8 @@ class Engine:
                          "hunts": {g.label: g.hunt for g in groups}, "tasks": self.memory.tasks_today(task_day(self.cfg))}
         self._invites(accounts)
         for acc in training:
-            self._safe(acc.name, lambda acc=acc: self._train(acc), [acc])
+            if time.time() >= self.cooldown.get(acc.name, 0):      # falhou ha pouco: espera a pausa (antes repetia a cada ciclo)
+                self._safe(acc.name, lambda acc=acc: self._train(acc), [acc])
         for group in groups:
             if time.time() < self.cooldown.get(group.label, 0):
                 continue
