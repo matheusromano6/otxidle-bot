@@ -38,6 +38,10 @@ class ParseTest(unittest.TestCase):
         raw = {"name": "Conta Um", "offline": True, "modals": []}
         self.assertEqual(build_state(raw).phase, "offline")
 
+    def test_error_page(self):
+        self.assertEqual(build_state({"error": True, "modals": []}).phase, "error")
+        self.assertEqual(build_state(dict(RAW, error=True)).phase, "hunting")   # com o jogo carregado nao e' erro
+
     def test_invite(self):
         raw = dict(RAW, hunting=False, city=True,
                    modals=["CONVITE DE PARTY\n\nConta Lider Level 12 convidou você para uma party\n\n58s restantes\nRECUSAR\nENTRAR"])

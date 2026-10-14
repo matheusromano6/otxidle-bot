@@ -375,6 +375,31 @@ class EngineV1Test(unittest.TestCase):
         self.assertEqual(out.actions[:2], ["open_play", "login:login_b"])
         self.assertEqual(eng.memory.login_of("Fora"), "login_b")
 
+    def test_error_page_is_reloaded_then_waits(self):
+        w = World()
+        acc = FakeAccount(w, "Solo")
+        acc.state.phase, acc.state.name = "error", ""
+        acc.reload = lambda: acc.actions.append("reload")
+        eng = engine_for(w, make_cfg())
+        eng.tick()
+        eng.tick()                                              # 1 min entre recarregamentos
+        self.assertEqual(acc.actions, ["reload"])
+        eng.reload_at[id(acc)] = 0
+        eng.tick()
+        self.assertEqual(acc.actions, ["reload", "reload"])
+
+    def test_unknown_screen_reloaded_after_two_minutes(self):
+        w = World()
+        acc = FakeAccount(w, "Solo")
+        acc.state.phase = "unknown"
+        acc.reload = lambda: acc.actions.append("reload")
+        eng = engine_for(w, make_cfg())
+        eng.tick()
+        self.assertEqual(acc.actions, [])                       # pode ser so' carregando
+        eng.unknown_since[id(acc)] -= 121
+        eng.tick()
+        self.assertEqual(acc.actions, ["reload"])
+
     def test_invite_from_stranger_ignored(self):
         w = World()
         acc = FakeAccount(w, "Um")

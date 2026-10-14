@@ -277,3 +277,10 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   cai direto no treino. O jogo TRADUZIU o botao: 'End Training' -> 'Finalizar Training' (END_TRAIN_TEXT agora e regex).
   Exercise: aria 'Usar Exercise Club para treinar'; depois de relogar o painel volta pra 'Arma: Só no boneco' (o bot religa).
 - 06:40 o bot falhou a cada ~30s procurando 'End Training' (o _train nao respeitava a pausa de falha): corrigido em v2.4.1.
+
+## 14/10/2026 - servidor fora do ar (Cloudflare) e recarregar a pagina
+- Servidor cai: a aba fica em 'Error 1033 ... Cloudflare Tunnel error ... Please try again in a few minutes' (url /play/, sem
+  elementos do jogo) e NAO volta sozinha. Antes: JOGAR AGORA falhava ('nao entrou no jogo') e a aba ficava parada horas.
+- v2.4.2: fase 'error' (Cloudflare / Error 10xx / Bad Gateway / ERR_ / pagina em branco, sem nome do jogo) -> Account.reload
+  (goto /play/) na hora e a cada 1 min; fase 'unknown' por > 2 min tambem recarrega (Engine._recover_pages). Depois o fluxo
+  normal: login -> JOGAR AGORA -> NOVIDADES -> party -> caça.

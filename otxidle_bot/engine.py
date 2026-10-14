@@ -117,6 +117,8 @@ class Engine:
         self.targets = {}             # conta -> (caça do grupo dela, motivo) do ultimo plano
         self.refresh_hunts_every = 20 * 3600   # relê a lista de caças do jogo (caças novas) a cada 20h
         self.blocked_hunts = {}       # caça -> ate quando nao tentar (o jogo nao deixou a party toda entrar)
+        self.unknown_since = {}       # pagina -> desde quando esta em erro/tela desconhecida
+        self.reload_at = {}           # pagina -> quando pode recarregar de novo
         self.current_hunt = {}        # conta -> caça do grupo (estabilidade: so' troca se outra atender mais tasks)
         self.login_busy = set()
         self._warned = set()
@@ -148,6 +150,28 @@ class Engine:
     @property
     def tasks_on(self):
         return bool(self.cfg["tasks"].get("enabled"))
+
+    def _recover_pages(self):
+        """Servidor caiu / pagina travada: recarrega sozinho. Pagina de erro (Cloudflare 1033, 502, em branco) = recarrega
+        na hora e a cada 1 min enquanto o servidor estiver fora; tela desconhecida por mais de 2 min = recarrega."""
+        now = time.time()
+        for acc in self.accounts:
+            phase = acc.state.phase
+            key = id(acc)
+            if phase not in ("error", "unknown"):
+                self.unknown_since.pop(key, None)
+                continue
+            since = self.unknown_since.setdefault(key, now)
+            if phase == "unknown" and now - since < 120:
+                continue
+            if now < self.reload_at.get(key, 0):
+                continue
+            self.reload_at[key] = now + 60
+            who = acc.name or "aba sem nome"
+            self.log(f"{who}: " + ("servidor fora do ar (página de erro)" if phase == "error" else "tela travada há 2 min")
+                     + " - recarregando a página")
+            acc.reload()
+            acc.read()
 
     def _relogin(self):
         """Paginas fora do jogo (sem nome): site -> /play/; login -> usa um login salvo que nao esta em uso."""
@@ -197,6 +221,7 @@ class Engine:
 
     def tick(self):
         states = self.read_all()
+        self._recover_pages()
         self._relogin()
         for acc in [a for a in self.accounts if a.name in states and a.state.phase == "offline"]:
             if time.time() >= self.cooldown.get(acc.name, 0):

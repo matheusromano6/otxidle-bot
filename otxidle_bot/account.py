@@ -21,6 +21,8 @@ READ_JS = r"""() => {
     login: vis(q('input[name="username"]')),
     site: !location.pathname.startsWith('/play'),
     updating: /server is being updated/i.test(document.body.innerText.slice(0, 3000)),
+    error: (() => { const t = (document.body?.innerText || '').slice(0, 3000);
+      return !t.trim() || /Cloudflare|Error 10\d\d|Bad Gateway|Gateway Time-?out|Service Unavailable|ERR_[A-Z_]+|This site can.t be reached|Não é possível acessar esse site|Esta página não está funcionando/i.test(t); })(),
     cap: txt('.gs-goldrow .cap'), gold: txt('.gs-goldrow .gold'),
     stamina_hunt: stam('.ta-bar[aria-label="Stamina de caça restante"]'),
     stamina_train: stam('.ta-bar[aria-label="Stamina de treino restante"]'),
@@ -67,7 +69,7 @@ class State:
     name: str = ""
     level: int = 0
     vocation: str = ""
-    phase: str = "unknown"          # hunting / leaving / city / training / offline / login / site / unknown
+    phase: str = "unknown"          # hunting / leaving / city / training / offline / login / site / error / unknown
     updating: bool = False          # tela de login avisando que o servidor esta atualizando (server save)
     notes: bool = False             # tela "NOVIDADES" aberta (precisa rolar e confirmar)
     death: str = ""                 # texto da tela "VOCÊ MORREU" (vazio = nao morreu)
@@ -101,7 +103,9 @@ def build_state(raw, cap_max=None):
     st.updating = bool(raw.get("updating"))
     st.notes = bool(raw.get("notes"))
     st.death = raw.get("death") or ""
-    if raw.get("site"):
+    if raw.get("error") and not raw.get("name"):
+        st.phase = "error"             # servidor caiu (Cloudflare 1033, 502...) ou pagina em branco: recarregar
+    elif raw.get("site"):
         st.phase = "site"
     elif raw.get("login"):
         st.phase = "login"
@@ -211,6 +215,14 @@ class Account:
         if not ok:
             raise GameError("não entrou no jogo")
         self.log(f"{self.name}: estava deslogado - entrou no jogo de novo")
+
+    def reload(self):
+        """Recarrega o /play/ (servidor caiu / pagina travada). Depois o fluxo normal: login -> JOGAR AGORA -> ..."""
+        try:
+            self.page.goto(S.PLAY_URL, wait_until="domcontentloaded", timeout=30000)
+        except Exception as error:
+            self.log(f"{self.name or 'aba'}: recarregar falhou ({str(error).splitlines()[0][:80]})")
+        time.sleep(3)
 
     def open_play(self):
         """Pagina inicial do site (o server save joga pra la') -> /play/ (tela de login ou personagens)."""
