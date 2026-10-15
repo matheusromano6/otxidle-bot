@@ -286,3 +286,10 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   normal: login -> JOGAR AGORA -> NOVIDADES -> party -> caça.
 - v2.4.3: party ligada e algum membro ainda voltando (erro/login/personagens) -> as online NAO caçam sozinhas: saem da caça
   e esperam na cidade ate 10 min (Engine._party_waiting); depois seguem com quem esta online (solo = caça segura do level).
+
+## 15/10/2026 - mortes repetidas e relogin
+- Madrugada: Druid (96) morreu 6x pra Hydra (~900k XP cada) e Sorc 4x - com min pelo lider (Kina 124) a party ia em caças
+  fortes demais pro membro mais fraco e o bot voltava sempre. v2.4.4: 2 mortes da mesma conta na mesma caça em 3h ->
+  caça bloqueada 12h (Engine._note_death / blocked_hunts, vale pro plano da party e pro solo). Morte isolada: so log.
+- A aba do Druid estava na pagina inicial do site com o bot PARADO (o usuario parou 06:35/12:26). Com o bot rodando o fluxo
+  site -> /play/ -> login salvo -> JOGAR AGORA funciona (validado 15:19); o aviso 'server is being updated' continua grudado.

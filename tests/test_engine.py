@@ -415,6 +415,16 @@ class EngineV1Test(unittest.TestCase):
         eng.tick()
         self.assertIn("hunt:Orc Camp", kina.actions)           # sozinha: caça segura pro level dela
 
+    def test_two_deaths_block_the_hunt(self):
+        w = World()
+        acc = FakeAccount(w, "Druid", hunt="Folda Icefields")
+        eng = engine_for(w, make_cfg())
+        eng.current_hunt["Druid"] = "Folda Icefields"
+        eng._note_death(acc)
+        self.assertNotIn("Folda Icefields", eng.blocked_hunts)               # 1 morte: so' avisa
+        eng._note_death(acc)
+        self.assertIn("Folda Icefields", eng.blocked_hunts)                  # 2 em 3h: bloqueia 12h
+
     def test_invite_from_stranger_ignored(self):
         w = World()
         acc = FakeAccount(w, "Um")

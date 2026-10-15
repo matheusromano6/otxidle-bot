@@ -330,7 +330,8 @@ def plan_party_first(accounts, hunts, cfg, current=None, blocked=()):
         if a["name"].casefold() in used:
             continue
         hunt = (cfg.get("tasks", {}).get("solo_hunts") or {}).get(a["name"].casefold()) or \
-            best_hunt(hunts, [a], a["level"], a["level"], current.get(a["name"].casefold()))[0]
+            best_hunt([h for h in hunts if h["name"] not in set(blocked)], [a], a["level"], a["level"],
+                      current.get(a["name"].casefold()))[0]
         if hunt:
             groups.append(PlanGroup(hunt, [a["name"]], "solo"))
     return groups

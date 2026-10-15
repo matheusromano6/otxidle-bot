@@ -119,6 +119,7 @@ class Engine:
         self.blocked_hunts = {}       # caça -> ate quando nao tentar (o jogo nao deixou a party toda entrar)
         self.unknown_since = {}       # pagina -> desde quando esta em erro/tela desconhecida
         self.party_wait_since = None  # desde quando a party espera um membro voltar (erro/login)
+        self.deaths = {}              # (conta, caça) -> horarios das mortes recentes
         self.reload_at = {}           # pagina -> quando pode recarregar de novo
         self.current_hunt = {}        # conta -> caça do grupo (estabilidade: so' troca se outra atender mais tasks)
         self.login_busy = set()
@@ -151,6 +152,20 @@ class Engine:
     @property
     def tasks_on(self):
         return bool(self.cfg["tasks"].get("enabled"))
+
+    def _note_death(self, acc):
+        """2 mortes da MESMA conta na MESMA caça em 3h -> bloqueia a caça 12h (o Druid morreu 6x pra Hydra numa noite,
+        ~900k XP cada, e o bot voltava sempre pra la'). Morte isolada: so' o aviso no log."""
+        hunt = self.current_hunt.get(acc.name) or acc.state.hunt_name or self.memory.group([acc.name]).get("hunt")
+        if not hunt:
+            return
+        now = time.time()
+        key = (acc.name, hunt.casefold())
+        recent = [t for t in self.deaths.get(key, []) if now - t < 3 * 3600] + [now]
+        self.deaths[key] = recent
+        if len(recent) >= 2 and now >= self.blocked_hunts.get(hunt, 0):
+            self.blocked_hunts[hunt] = now + 12 * 3600
+            self.log(f"{acc.name} morreu {len(recent)}x em {hunt} em menos de 3h - caça BLOQUEADA por 12h, a party vai pra próxima")
 
     def _recover_pages(self):
         """Servidor caiu / pagina travada: recarrega sozinho. Pagina de erro (Cloudflare 1033, 502, em branco) = recarrega
@@ -228,6 +243,8 @@ class Engine:
             if time.time() >= self.cooldown.get(acc.name, 0):
                 self._safe(acc.name, acc.login, [acc])          # o jogo derrubou: entra de novo
         for acc in [a for a in self.accounts if a.name in states and (a.state.notes or a.state.death)]:
+            if "MORREU" in (acc.state.death or "").upper():
+                self._note_death(acc)
             self._safe(acc.name, acc.dismiss_gates, [acc])
             states[acc.name] = acc.read()
         for acc in [a for a in self.accounts if a.name in states and any(m.startswith("PROMOÇÃO") for m in a.state.modals)]:
