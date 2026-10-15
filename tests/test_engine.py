@@ -425,6 +425,19 @@ class EngineV1Test(unittest.TestCase):
         eng._note_death(acc)
         self.assertIn("Folda Icefields", eng.blocked_hunts)                  # 2 em 3h: bloqueia 12h
 
+    def test_train_only_mode(self):
+        w = World()
+        acc = FakeAccount(w, "Sorc", stamina=700, vocation="Sorcerer")
+        cfg = make_cfg(party={"enabled": True, "leader": "kina", "members": [], "hunt": "", "modes": {"sorc": "train"}})
+        eng = engine_for(w, cfg)
+        eng.tick()
+        self.assertEqual(acc.actions, ["finish"])                      # caçando: sai
+        eng.tick()
+        self.assertEqual(acc.actions[-1], "train:Magic")              # cidade: treina
+        eng.tick()
+        self.assertEqual(acc.state.phase, "training")                 # stamina cheia mas NAO encerra
+        self.assertNotIn("end_training", acc.actions)
+
     def test_invite_from_stranger_ignored(self):
         w = World()
         acc = FakeAccount(w, "Um")

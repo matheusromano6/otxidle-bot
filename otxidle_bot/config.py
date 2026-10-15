@@ -31,6 +31,9 @@ DEFAULTS = {
         "leader": "",                     # nome (minusculas)
         "members": [],                    # nomes (minusculas)
         "hunt": "",                       # caça da party de grupo (fase de party das tasks); vazio = caçada padrao
+        # modo de cada conta (minusculas): "party" | "solo" (caça em tasks.solo_hunts) | "train" (so' treinar).
+        # Sem modo: lider/membros = party, o resto = solo.
+        "modes": {},
     },
     # tasks diarias (v2): cada conta faz 'per_day' tasks na dificuldade escolhida; contas com task na mesma caça caçam
     # juntas; quem termina ajuda quem falta (helpers); quando TODAS terminam, vai a party configurada pra party.hunt
@@ -69,6 +72,18 @@ def skill_for(training_cfg, name, vocation):
         if key in v:
             return skill
     return None
+
+
+def account_mode(cfg, name):
+    """'party' / 'solo' / 'train' da conta (escolhido na aba Party)."""
+    key = (name or "").casefold()
+    party = cfg.get("party") or {}
+    mode = (party.get("modes") or {}).get(key)
+    if mode:
+        return mode
+    if key == (party.get("leader") or "").casefold() or key in [m.casefold() for m in party.get("members") or []]:
+        return "party"
+    return "solo"
 
 
 def _merge(base, extra):

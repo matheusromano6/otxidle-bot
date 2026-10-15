@@ -302,15 +302,15 @@ def plan_party_first(accounts, hunts, cfg, current=None, blocked=()):
     over = cfg.get("tasks", {}).get("group_level_over", 5)
     by = {a["name"].casefold(): a for a in accounts}
     current = {k.casefold(): v for k, v in (current or {}).items()}
+    from .config import account_mode
+    in_party = [a for a in accounts if account_mode(cfg, a["name"]) == "party"]
     leader = by.get((party.get("leader") or "").casefold())
-    if leader is None and accounts:
-        leader = max(accounts, key=lambda a: a["level"])
+    if leader is None or leader not in in_party:
+        leader = max(in_party, key=lambda a: a["level"]) if in_party else None
     groups = []
     members = []
     if leader is not None and party.get("enabled"):
-        wanted = [m.casefold() for m in party.get("members") or []]
-        members = [leader] + [by[m] for m in wanted if m in by and m != leader["name"].casefold()
-                              and levels_ok([leader["level"], by[m]["level"]])]
+        members = [leader] + [a for a in in_party if a is not leader and levels_ok([leader["level"], a["level"]])]
     if len(members) >= 2:
         # minimo da caça pelo LIDER (usuario: "o lider leva a party porque o conjunto e' forte"); se o jogo nao deixar
         # algum membro entrar, o motor bloqueia a caça por um tempo (blocked)

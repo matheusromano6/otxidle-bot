@@ -298,3 +298,9 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - Sorc morreu muito e ficou levels atras (nao acompanha a party). Aba Party: cada conta tem 'na party' (marcada) e 'Caça solo'
   (`tasks.solo_hunts` nome->caça; Automatica = mais forte segura rec<=level). Desmarcada = caça sozinha com fluxo completo
   (venda, treino proprio, relogin). Engine.party_first tambem quando ha solo_hunts (party desligada).
+
+## v2.6.0 - modo por conta (15/10/2026, usuario)
+- Aba Party: cada conta (inclusive a lider) tem modo Party / Solo / Só treinar (`party.modes`; sem modo: lider+members = party,
+  resto = solo; config.account_mode). Party fora dos 2/3 do lider ja caça solo e volta sozinha quando alcança. Solo = caça
+  em `tasks.solo_hunts` (ou Automatica). 'Só treinar' = treina direto com a arma de exercicio e nunca encerra (Engine._train).
+  Lider em modo nao-party: a party usa a conta de maior level em modo party.

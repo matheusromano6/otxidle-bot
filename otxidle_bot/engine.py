@@ -258,7 +258,8 @@ class Engine:
                 if time.time() >= self.cooldown.get(acc.name, 0):
                     self._safe(acc.name, lambda acc=acc: self._task_upkeep(acc), [acc])
         # treinando: as que o bot mandou (stamina) e as que VOCE colocou pra treinar (o bot respeita e nao encerra)
-        training = [a for a in accounts if self.memory.training(a.name) or a.state.phase == "training"]
+        training = [a for a in accounts if self.memory.training(a.name) or a.state.phase == "training"
+                    or cfgmod.account_mode(self.cfg, a.name) == "train"]
         playing = [a for a in accounts if a not in training]
         groups = self._groups(playing)
         self.expected_leader = {a.name.casefold(): g.leader.name for g in groups for a in g.members}
@@ -286,7 +287,8 @@ class Engine:
         party = self.cfg["party"]
         if not party.get("enabled"):
             return False
-        wanted = {n.casefold() for n in [party.get("leader") or ""] + list(party.get("members") or []) if n}
+        wanted = {n.casefold() for n in [party.get("leader") or ""] + list(party.get("members") or [])
+                  if n and cfgmod.account_mode(self.cfg, n) == "party"}
         here = {a.name.casefold() for a in online}
         away = [a for a in self.accounts if a.name and a.name.casefold() in wanted and a.name.casefold() not in here]
         if not away:
@@ -648,8 +650,29 @@ class Engine:
     # ------------------------------------------------------------- treino
     def _train(self, acc):
         st = acc.state
+        only = cfgmod.account_mode(self.cfg, acc.name) == "train"     # modo "So' treinar" (aba Party)
         if st.phase == "hunting":
+            if only:
+                self.log(f"{acc.name}: modo só treinar - saindo da caça")
             acc.finish_hunt()
+            return
+        if only:
+            if st.phase == "training":
+                if self.cfg["training"].get("use_exercise", True) and any(not d.get("on") for d in st.drills) \
+                        and time.time() >= self.exercise_try.get(acc.name, 0):
+                    self.exercise_try[acc.name] = time.time() + 300
+                    acc.use_exercise_weapon()
+                if st.stamina_train is not None and st.stamina_train <= 1:
+                    self._warn_once(("notrain", acc.name, int(time.time() // 3600)),
+                                    f"{acc.name}: modo só treinar, mas a stamina de treino acabou")
+                return
+            if st.phase == "city":
+                if st.party_size:
+                    acc.leave_party()
+                acc.sell_all()
+                skill = cfgmod.skill_for(self.cfg["training"], acc.name, st.vocation)
+                if skill:
+                    acc.start_training(skill)
             return
         if st.phase == "training":
             if self.cfg["training"].get("use_exercise", True) and any(not d.get("on") for d in st.drills) \

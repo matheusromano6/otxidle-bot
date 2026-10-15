@@ -25,6 +25,7 @@ BG, PANEL, PANEL_ALT, BORDER = "#101418", "#161c22", "#1d252d", "#2b3640"
 TEXT, MUTED, ACCENT, ACCENT_HOVER, DANGER, WARN = "#e6edf3", "#8b98a5", "#ff8c1a", "#e67a0f", "#f85149", "#d29922"
 PHASES = {"hunting": "caçando", "city": "cidade", "training": "treinando", "leaving": "saindo", "unknown": "?"}
 MAX_LOG_LINES = 500
+MODES = {"party": "Party", "solo": "Solo", "train": "Só treinar"}
 PRIORITIES = {"xp": "XP: party na caça mais forte (tasks de carona)", "tasks": "Tasks: caça que atende mais tasks / Paw"}
 
 
@@ -396,8 +397,9 @@ class App:
                                "líder e level mínimo que todos alcançam. 'Automática' escolhe a mais forte delas e acompanha "
                                "os levels conforme sobem.", text_color=MUTED, wraplength=840, justify="left"
                      ).pack(anchor="w", padx=14, pady=(0, 8))
-        ctk.CTkLabel(tab, text="Contas: marcada = caça na party; desmarcada = caça SOZINHA na 'Caça solo' escolhida (com venda, "
-                               "treino e relogin normais). Útil pra quem ficou com level atrasado.", text_color=TEXT,
+        ctk.CTkLabel(tab, text="Modo de cada conta: Party = caça com a party (fora dos 2/3 do líder caça solo até alcançar); "
+                               "Solo = caça sozinha na 'Caça solo' (venda, treino e relogin normais); Só treinar = fica no treino "
+                               "(com a arma de exercício) até você mudar.", text_color=TEXT,
                      wraplength=840, justify="left").pack(anchor="w", padx=14)
         self.party_members_frame = ctk.CTkFrame(tab, fg_color=PANEL_ALT)
         self.party_members_frame.pack(fill="x", padx=14, pady=(6, 10))
@@ -426,32 +428,31 @@ class App:
                          text_color=MUTED).pack(anchor="w", padx=10, pady=8)
             self._refresh_party_hunts()
             return
-        members = {m.casefold() for m in party.get("members") or []}
         lead_level = (accounts.get(leader) or {}).get("level") or 0
-        if leader in accounts:
-            info = accounts[leader]
-            line = ctk.CTkFrame(self.party_members_frame, fg_color="transparent")
-            line.pack(fill="x", padx=10, pady=2)
-            ctk.CTkLabel(line, text=f"★ {info['name']} (líder)", text_color=TEXT, width=250, anchor="w").pack(side="left")
-            ctk.CTkLabel(line, text=f"{info.get('vocation') or ''} {info.get('level') or ''}".strip(), width=210, anchor="w",
-                         text_color=MUTED).pack(side="left", padx=8)
-            self._solo_menu(line, leader, info)          # vale quando a party esta desligada
-        for key in sorted(accounts):
-            if key == leader:
-                continue
+        modes = party.setdefault("modes", {})
+        for key in sorted(accounts, key=lambda k: (k != leader, k)):
             info = accounts[key]
-            var = tk.BooleanVar(value=key in members)
-            warn = outside_two_thirds(lead_level, info.get("level"))
+            mode = config.account_mode(self.cfg, key)
+            warn = mode == "party" and key != leader and outside_two_thirds(lead_level, info.get("level"))
             note = f"{info.get('vocation') or ''} {info.get('level') or ''}".strip()
             line = ctk.CTkFrame(self.party_members_frame, fg_color="transparent")
             line.pack(fill="x", padx=10, pady=2)
-            ctk.CTkCheckBox(line, text=f"{info['name']} (na party)", variable=var, command=self._party_changed,
-                            fg_color=ACCENT, text_color=TEXT, width=250).pack(side="left")
-            ctk.CTkLabel(line, text=note + ("   ⚠ fora dos 2/3 do líder" if warn else ""), width=210, anchor="w",
-                         text_color=WARN if warn else MUTED).pack(side="left", padx=8)
+            ctk.CTkLabel(line, text=("★ " if key == leader else "") + info["name"], text_color=TEXT, width=170,
+                         anchor="w").pack(side="left")
+            var = tk.StringVar(value=MODES[mode])
+            ctk.CTkOptionMenu(line, values=list(MODES.values()), variable=var, width=130, fg_color=PANEL_ALT,
+                              command=lambda value, k=key: self._mode_changed(k, value)).pack(side="left", padx=4)
+            ctk.CTkLabel(line, text=note + ("  ⚠ fora dos 2/3: caça solo até alcançar" if warn else ""), width=260,
+                         anchor="w", text_color=WARN if warn else MUTED).pack(side="left", padx=8)
             self._solo_menu(line, key, info)
             self.party_member_vars[key] = var
         self._refresh_party_hunts()
+
+    def _mode_changed(self, key, label):
+        mode = next(k for k, v in MODES.items() if v == label)
+        self.cfg["party"].setdefault("modes", {})[key] = mode
+        self.log(f"modo de {key}: {label}")
+        self._party_changed(rebuild=True)
 
     def _solo_menu(self, parent, key, info):
         """Caça solo da conta (vale quando ela esta FORA da party): Automatica = a mais forte segura pro level dela."""
@@ -511,7 +512,7 @@ class App:
         leader = next((k for k, v in self.party_accounts.items() if v["name"] == self.party_leader.get()), "")
         party["enabled"] = bool(self.party_enabled.get())
         party["leader"] = leader
-        party["members"] = sorted(k for k, var in self.party_member_vars.items() if var.get() and k != leader)
+        party["members"] = sorted(k for k in self.party_member_vars if k != leader and config.account_mode(self.cfg, k) == "party")
         party["hunt"] = self.party_hunt_labels.get(self.party_hunt.get(), party.get("hunt") or "")
         self.save()
         if rebuild:
