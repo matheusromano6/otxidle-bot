@@ -345,7 +345,8 @@ class Engine:
 
     @property
     def party_first(self):
-        return bool(self.cfg["party"].get("enabled"))
+        # plano "party primeiro" (party de 4 + contas solo cada uma na sua caça) quando ha party ou caça solo escolhida
+        return bool(self.cfg["party"].get("enabled")) or bool((self.cfg["tasks"].get("solo_hunts") or {}))
 
     def _groups_party_first(self, accounts, by, day, skip):
         infos = []

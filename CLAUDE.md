@@ -293,3 +293,8 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   caça bloqueada 12h (Engine._note_death / blocked_hunts, vale pro plano da party e pro solo). Morte isolada: so log.
 - A aba do Druid estava na pagina inicial do site com o bot PARADO (o usuario parou 06:35/12:26). Com o bot rodando o fluxo
   site -> /play/ -> login salvo -> JOGAR AGORA funciona (validado 15:19); o aviso 'server is being updated' continua grudado.
+
+## v2.5.0 - contas solo com caça escolhida (15/10/2026, usuario)
+- Sorc morreu muito e ficou levels atras (nao acompanha a party). Aba Party: cada conta tem 'na party' (marcada) e 'Caça solo'
+  (`tasks.solo_hunts` nome->caça; Automatica = mais forte segura rec<=level). Desmarcada = caça sozinha com fluxo completo
+  (venda, treino proprio, relogin). Engine.party_first tambem quando ha solo_hunts (party desligada).

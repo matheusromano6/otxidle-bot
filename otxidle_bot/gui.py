@@ -396,7 +396,9 @@ class App:
                                "líder e level mínimo que todos alcançam. 'Automática' escolhe a mais forte delas e acompanha "
                                "os levels conforme sobem.", text_color=MUTED, wraplength=840, justify="left"
                      ).pack(anchor="w", padx=14, pady=(0, 8))
-        ctk.CTkLabel(tab, text="Quem pode ser chamado pra party:", text_color=TEXT).pack(anchor="w", padx=14)
+        ctk.CTkLabel(tab, text="Contas: marcada = caça na party; desmarcada = caça SOZINHA na 'Caça solo' escolhida (com venda, "
+                               "treino e relogin normais). Útil pra quem ficou com level atrasado.", text_color=TEXT,
+                     wraplength=840, justify="left").pack(anchor="w", padx=14)
         self.party_members_frame = ctk.CTkFrame(tab, fg_color=PANEL_ALT)
         self.party_members_frame.pack(fill="x", padx=14, pady=(6, 10))
         self.party_member_vars = {}
@@ -426,6 +428,14 @@ class App:
             return
         members = {m.casefold() for m in party.get("members") or []}
         lead_level = (accounts.get(leader) or {}).get("level") or 0
+        if leader in accounts:
+            info = accounts[leader]
+            line = ctk.CTkFrame(self.party_members_frame, fg_color="transparent")
+            line.pack(fill="x", padx=10, pady=2)
+            ctk.CTkLabel(line, text=f"★ {info['name']} (líder)", text_color=TEXT, width=250, anchor="w").pack(side="left")
+            ctk.CTkLabel(line, text=f"{info.get('vocation') or ''} {info.get('level') or ''}".strip(), width=210, anchor="w",
+                         text_color=MUTED).pack(side="left", padx=8)
+            self._solo_menu(line, leader, info)          # vale quando a party esta desligada
         for key in sorted(accounts):
             if key == leader:
                 continue
@@ -435,12 +445,39 @@ class App:
             note = f"{info.get('vocation') or ''} {info.get('level') or ''}".strip()
             line = ctk.CTkFrame(self.party_members_frame, fg_color="transparent")
             line.pack(fill="x", padx=10, pady=2)
-            ctk.CTkCheckBox(line, text=info["name"], variable=var, command=self._party_changed, fg_color=ACCENT,
-                            text_color=TEXT, width=220).pack(side="left")
-            ctk.CTkLabel(line, text=note + ("   ⚠ level fora dos 2/3 do líder (caça solo)" if warn else ""),
+            ctk.CTkCheckBox(line, text=f"{info['name']} (na party)", variable=var, command=self._party_changed,
+                            fg_color=ACCENT, text_color=TEXT, width=250).pack(side="left")
+            ctk.CTkLabel(line, text=note + ("   ⚠ fora dos 2/3 do líder" if warn else ""), width=210, anchor="w",
                          text_color=WARN if warn else MUTED).pack(side="left", padx=8)
+            self._solo_menu(line, key, info)
             self.party_member_vars[key] = var
         self._refresh_party_hunts()
+
+    def _solo_menu(self, parent, key, info):
+        """Caça solo da conta (vale quando ela esta FORA da party): Automatica = a mais forte segura pro level dela."""
+        level = info.get("level") or 0
+        solo = self.cfg["tasks"].setdefault("solo_hunts", {})
+        options = sorted([h for h in self.hunts if (h.get("rec_level") or 1) <= level and (h.get("min_level") or 1) <= level],
+                         key=lambda h: (-(h.get("rec_level") or 1), h["name"]))
+        labels = {"Caça solo: Automática": ""}
+        for h in options:
+            labels[f"{h['name']} (rec {h.get('rec_level')})"] = h["name"]
+        chosen = solo.get(key) or ""
+        if chosen and chosen not in labels.values():
+            labels[f"{chosen} ⚠ acima do level"] = chosen
+        var = tk.StringVar(value=next((l for l, n in labels.items() if n == chosen), "Caça solo: Automática"))
+
+        def changed(value, key=key, labels=labels):
+            hunt = labels.get(value, "")
+            if hunt:
+                solo[key] = hunt
+            else:
+                solo.pop(key, None)
+            self.save()
+            self.log(f"caça solo de {key}: {hunt or 'automática'}")
+
+        ctk.CTkOptionMenu(parent, values=list(labels), variable=var, width=260, fg_color=PANEL, dynamic_resizing=False,
+                          command=changed).pack(side="left", padx=4)
 
     def _refresh_party_hunts(self):
         """Lista da 'Caça da party': Automática (com a escolha de agora) + caças que o grupo marcado pode fazer."""

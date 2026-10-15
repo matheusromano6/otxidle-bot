@@ -571,6 +571,14 @@ class PartyFirstTest(unittest.TestCase):
         cfg["party"]["min_by_leader"] = False
         self.assertEqual(T.plan_party_first(accs, hunts, cfg)[0].hunt, "Tomb Floor II")     # minimo de todos (19)
 
+    def test_solo_account_with_chosen_hunt(self):
+        cfg = make_cfg(tasks=False, party={"enabled": True, "leader": "kina", "members": ["pally"], "hunt": ""})
+        cfg["tasks"]["solo_hunts"] = {"sorc": "Orc Camp"}
+        accs = [{"name": "Kina", "level": 24}, {"name": "Pally", "level": 20}, {"name": "Sorc", "level": 12}]
+        groups = {tuple(g.accounts): (g.hunt, g.reason) for g in T.plan_party_first(accs, HUNTS + [TOMB], cfg)}
+        self.assertEqual(groups[("Sorc",)], ("Orc Camp", "solo"))                 # fora da party: a caça escolhida
+        self.assertEqual(groups[("Kina", "Pally")][1], "party")
+
     def test_member_outside_two_thirds_goes_solo_safe(self):
         hunts = HUNTS + [TOMB]
         cfg = make_cfg(tasks=True, party={"enabled": True, "leader": "kina", "members": ["baixo"], "hunt": ""})
