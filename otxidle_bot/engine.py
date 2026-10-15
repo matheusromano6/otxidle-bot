@@ -106,6 +106,7 @@ class Engine:
         self.snapshot = {"states": {}, "groups": {}, "hunts": {}, "tasks": {}}
         self.city_since = {}          # grupo -> quando foi visto parado na cidade
         self.ours = set()             # contas que o BOT levou pra cidade (o grupo delas assume na hora)
+        self.first_tick = True
         self.cooldown = {}            # grupo/conta -> ate quando nao tentar de novo
         self.party_skip = {}          # conta -> ate quando fica fora de party (nao entrou)
         self.cap_floor = {}           # conta -> % de capacidade logo depois de vender
@@ -258,8 +259,21 @@ class Engine:
                 if time.time() >= self.cooldown.get(acc.name, 0):
                     self._safe(acc.name, lambda acc=acc: self._task_upkeep(acc), [acc])
         # treinando: as que o bot mandou (stamina) e as que VOCE colocou pra treinar (o bot respeita e nao encerra)
-        training = [a for a in accounts if self.memory.training(a.name) or a.state.phase == "training"
-                    or cfgmod.account_mode(self.cfg, a.name) == "train"]
+        # treino que nao foi o bot que mandou (iniciado na mao / antes de ligar o bot): o MODO da conta manda.
+        # Se a stamina de caça ainda nao recuperou, vira treino do bot (fica ate recuperar); senao a conta e' encerrada
+        # e vai pro destino do modo (party/solo).
+        for a in accounts:
+            if (a.state.phase == "training" and not self.memory.training(a.name)
+                    and cfgmod.account_mode(self.cfg, a.name) != "train"
+                    and a.state.stamina_hunt is not None
+                    and a.state.stamina_hunt < self.cfg["training"]["resume_stamina_minutes"]):
+                self.memory.set_training(a.name, True)
+                self.log(f"{a.name}: treinando com stamina de caça baixa ({a.state.stamina_hunt} min) - fica até recuperar")
+        if self.first_tick:
+            # ao ligar o bot ele assume na hora (sem esperar 'cidade parada'): cada conta vai pro destino do modo
+            self.first_tick = False
+            self.ours.update(a.name for a in accounts)
+        training = [a for a in accounts if self.memory.training(a.name) or cfgmod.account_mode(self.cfg, a.name) == "train"]
         playing = [a for a in accounts if a not in training]
         groups = self._groups(playing)
         self.expected_leader = {a.name.casefold(): g.leader.name for g in groups for a in g.members}
@@ -680,7 +694,7 @@ class Engine:
                 self.exercise_try[acc.name] = time.time() + 300      # se nao ligar, tenta de novo em 5 min
                 acc.use_exercise_weapon()
             if not self.memory.training(acc.name):
-                return                      # treino que voce iniciou: o bot nao encerra
+                return
             if self.party_first and not self._all_trained():
                 return                      # party: espera TODAS recuperarem pra voltar junto
             if training_done(st, self.cfg):

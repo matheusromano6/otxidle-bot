@@ -304,3 +304,8 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   resto = solo; config.account_mode). Party fora dos 2/3 do lider ja caça solo e volta sozinha quando alcança. Solo = caça
   em `tasks.solo_hunts` (ou Automatica). 'Só treinar' = treina direto com a arma de exercicio e nunca encerra (Engine._train).
   Lider em modo nao-party: a party usa a conta de maior level em modo party.
+
+## v2.6.1 - ao ligar, cada conta vai pro destino do modo (15/10/2026, usuario)
+- Treino que o bot nao mandou (na mao / antes de ligar) NAO e mais respeitado: se a stamina de caça < resume -> vira treino
+  do bot (fica ate recuperar); senao encerra e a conta segue o modo (party: cidade -> party -> caça; solo: caça escolhida).
+  Ao ligar (first_tick) o bot assume na hora as contas na cidade (sem a espera de 'cidade parada'). Caça errada -> _mismatch.

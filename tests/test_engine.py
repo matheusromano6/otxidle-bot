@@ -277,6 +277,7 @@ class EngineV1Test(unittest.TestCase):
         w = World()
         acc = FakeAccount(w, "Solo", phase="city")
         eng = engine_for(w, make_cfg(default_hunt="Rat Cellars"))
+        eng.first_tick = False                     # (ao ligar o bot ele assume na hora; aqui: cidade depois)
         eng.tick()
         self.assertEqual(acc.actions, [])          # pode ser o usuario mexendo
         eng.city_since["Solo"] -= 1000
@@ -310,19 +311,16 @@ class EngineV1Test(unittest.TestCase):
         eng.tick()
         self.assertEqual(acc.actions, ["end_training", "sell", "hunt:Troll Hills"])
 
-    def test_manual_training_is_respected_and_uses_exercise(self):
+    def test_training_outside_bot_follows_the_mode(self):
         w = World()
-        kina = FakeAccount(w, "Kina", phase="training", stamina=600)
+        kina = FakeAccount(w, "Kina", phase="training", stamina=650)          # stamina cheia: o modo (party) manda
         kina.state.drills = [{"label": "Train with the Exercise Club", "on": False}]
-        um = FakeAccount(w, "Um", phase="city")
-        eng = engine_for(w, make_cfg(party={"enabled": True, "leader": "kina", "members": ["um"]}, idle_city_seconds=0,
-                                     default_hunt="Troll Hills"))
+        pally = FakeAccount(w, "Pally", phase="training", stamina=100)       # stamina baixa: fica ate recuperar
+        eng = engine_for(w, make_cfg(party={"enabled": True, "leader": "kina", "members": ["pally"], "hunt": "Troll Hills"}))
         eng.tick()
-        self.assertEqual(kina.actions, ["exercise"])             # liga a arma, NAO encerra o treino manual
-        self.assertEqual(kina.state.phase, "training")
-        self.assertIn("hunt:Orc Camp", um.actions)               # o resto segue sem o lider (solo: a mais forte segura)
-        eng.tick()
-        self.assertEqual(kina.actions, ["exercise"])
+        self.assertIn("end_training", kina.actions)
+        self.assertNotIn("end_training", pally.actions)
+        self.assertTrue(eng.memory.training("Pally"))
 
     def test_bot_training_restarts_with_exercise(self):
         w = World()
@@ -343,7 +341,7 @@ class EngineV1Test(unittest.TestCase):
         acc = FakeAccount(w, "Solo", phase="offline")
         acc.login = lambda: (acc.actions.append("login"), setattr(acc.state, "phase", "city"))
         engine_for(w, make_cfg(default_hunt="Troll Hills")).tick()
-        self.assertEqual(acc.actions, ["login"])
+        self.assertEqual(acc.actions[0], "login")
 
     def test_relogin_after_server_save(self):
         w = World()
