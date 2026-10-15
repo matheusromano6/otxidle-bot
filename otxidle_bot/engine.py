@@ -185,7 +185,7 @@ class Engine:
                 continue
             self.reload_at[key] = now + 60
             who = acc.name or "aba sem nome"
-            self.log(f"{who}: " + ("servidor fora do ar (página de erro)" if phase == "error" else "tela travada há 2 min")
+            self.log(f"{who}: " + ("desconectado / servidor fora do ar" if phase == "error" else "tela travada há 2 min")
                      + " - recarregando a página")
             acc.reload()
             acc.read()
@@ -250,8 +250,8 @@ class Engine:
             states[acc.name] = acc.read()
         for acc in [a for a in self.accounts if a.name in states and any(m.startswith("PROMOÇÃO") for m in a.state.modals)]:
             self._safe(acc.name, acc.dismiss_notices, [acc])
-        states = {n: st for n, st in states.items() if st.phase != "offline"}
-        accounts = [a for a in self.accounts if a.name in states and a.state.phase != "offline"]
+        states = {n: st for n, st in states.items() if st.phase not in ("offline", "error")}
+        accounts = [a for a in self.accounts if a.name in states and a.state.phase not in ("offline", "error")]
         if self.hunts is None and (self.tasks_on or self.party_first):
             self.hunts = T.load_hunts()
         if self.tasks_on:

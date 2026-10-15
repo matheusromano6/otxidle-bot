@@ -21,6 +21,8 @@ READ_JS = r"""() => {
     login: vis(q('input[name="username"]')),
     site: !location.pathname.startsWith('/play'),
     updating: /server is being updated/i.test(document.body.innerText.slice(0, 3000)),
+    disconnected: [...document.querySelectorAll('.ti-note--error .ti-note__title, .mantine-Notification-title')]
+      .some(t => vis(t) && /DESCONECTADO|DISCONNECTED/i.test(t.innerText || '')),
     error: (() => { const t = (document.body?.innerText || '').slice(0, 3000);
       return !t.trim() || /Cloudflare|Error 10\d\d|Bad Gateway|Gateway Time-?out|Service Unavailable|ERR_[A-Z_]+|This site can.t be reached|Não é possível acessar esse site|Esta página não está funcionando/i.test(t); })(),
     cap: txt('.gs-goldrow .cap'), gold: txt('.gs-goldrow .gold'),
@@ -103,7 +105,9 @@ def build_state(raw, cap_max=None):
     st.updating = bool(raw.get("updating"))
     st.notes = bool(raw.get("notes"))
     st.death = raw.get("death") or ""
-    if raw.get("error") and not raw.get("name"):
+    if raw.get("disconnected"):
+        st.phase = "error"             # notificacao "DESCONECTADO" (WebSocket 1006): a tela fica congelada -> recarregar
+    elif raw.get("error") and not raw.get("name"):
         st.phase = "error"             # servidor caiu (Cloudflare 1033, 502...) ou pagina em branco: recarregar
     elif raw.get("site"):
         st.phase = "site"

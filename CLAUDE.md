@@ -309,3 +309,9 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - Treino que o bot nao mandou (na mao / antes de ligar) NAO e mais respeitado: se a stamina de caça < resume -> vira treino
   do bot (fica ate recuperar); senao encerra e a conta segue o modo (party: cidade -> party -> caça; solo: caça escolhida).
   Ao ligar (first_tick) o bot assume na hora as contas na cidade (sem a espera de 'cidade parada'). Caça errada -> _mismatch.
+
+## v2.6.2 - notificacao DESCONECTADO (15/10/2026, ao vivo)
+- Queda de conexao: aparece `.ti-note.ti-note--error` (Mantine Notification) titulo 'DESCONECTADO' e corpo 'WebSocket closed with
+  status code: 1006' ou 'Cannot send data if the connection is not in the Connected State'. A tela de caça/treino fica CONGELADA
+  (o bot achava que estava tudo certo). Agora vira fase 'error' -> recarrega a aba (Engine._recover_pages) e sai do plano
+  ate voltar. Validado 20:54: Kina e Druid recarregados -> JOGAR AGORA.
