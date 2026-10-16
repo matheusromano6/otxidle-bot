@@ -335,10 +335,22 @@ class App:
         self.party_train_mode = tk.StringVar(value=PARTY_TRAIN[self.cfg["training"].get("party_mode", "together")])
         ctk.CTkOptionMenu(grid, values=list(PARTY_TRAIN.values()), variable=self.party_train_mode, width=420,
                           fg_color=PANEL_ALT).grid(row=9, column=1, columnspan=2, sticky="w")
+        bless = self.cfg.setdefault("blessings", {"enabled": True, "keep": 7, "reserve_gold": 0})
+        self.bless_var = tk.BooleanVar(value=bool(bless.get("enabled", True)))
+        ctk.CTkCheckBox(grid, text="Comprar blessings sozinho (a morte gasta as que amorteceu)", variable=self.bless_var,
+                        fg_color=ACCENT, text_color=TEXT).grid(row=11, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        ctk.CTkLabel(grid, text="Blessings a manter", text_color=TEXT).grid(row=12, column=0, sticky="w", pady=4)
+        self.bless_keep = tk.StringVar(value=str(bless.get("keep", 7)))
+        ctk.CTkEntry(grid, textvariable=self.bless_keep, width=110, fg_color=PANEL_ALT).grid(row=12, column=1, sticky="w")
+        ctk.CTkLabel(grid, text="de 0 a 7 (cada uma tira 8% da perda na morte)", text_color=MUTED).grid(row=12, column=2, sticky="w", padx=12)
+        ctk.CTkLabel(grid, text="Reserva de ouro", text_color=TEXT).grid(row=13, column=0, sticky="w", pady=4)
+        self.bless_reserve = tk.StringVar(value=str(bless.get("reserve_gold", 0)))
+        ctk.CTkEntry(grid, textvariable=self.bless_reserve, width=110, fg_color=PANEL_ALT).grid(row=13, column=1, sticky="w")
+        ctk.CTkLabel(grid, text="ouro que o bot nunca gasta em blessing", text_color=MUTED).grid(row=13, column=2, sticky="w", padx=12)
         ctk.CTkButton(grid, text="Salvar regras", command=self._save_rules, fg_color=ACCENT, hover_color=ACCENT_HOVER,
-                      text_color="#1a0d00").grid(row=10, column=0, sticky="w", pady=10)
+                      text_color="#1a0d00").grid(row=14, column=0, sticky="w", pady=10)
         self.rules_msg = ctk.CTkLabel(grid, text="", text_color=MUTED)
-        self.rules_msg.grid(row=10, column=1, columnspan=2, sticky="w")
+        self.rules_msg.grid(row=14, column=1, columnspan=2, sticky="w")
         ctk.CTkLabel(tab, text="Na venda o bot usa 'SELECIONAR TUDO' da venda rápida: vende tudo do inventário. "
                                "Itens no POUCH ficam protegidos - guarde lá o que não pode ser vendido.",
                      text_color=MUTED, wraplength=840, justify="left").pack(anchor="w", padx=14)
@@ -359,6 +371,13 @@ class App:
                 self.cfg[key] = value
             else:
                 self.cfg[key][sub] = value
+        try:
+            keep = max(0, min(7, int(self.bless_keep.get())))
+            reserve = max(0, int(float(self.bless_reserve.get().replace(".", "").replace(",", ""))))
+        except ValueError:
+            self.rules_msg.configure(text="Blessings: use números (0 a 7 e ouro sem casas).", text_color=DANGER)
+            return
+        self.cfg["blessings"] = {"enabled": bool(self.bless_var.get()), "keep": keep, "reserve_gold": reserve}
         self.cfg["training"]["enabled"] = bool(self.training_var.get())
         self.cfg["training"]["party_mode"] = next(k for k, v in PARTY_TRAIN.items() if v == self.party_train_mode.get())
         self.cfg["default_hunt"] = self.default_hunt.get().strip()

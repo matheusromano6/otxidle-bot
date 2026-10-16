@@ -55,6 +55,8 @@ DEFAULTS = {
         "reset_hour": 0,                  # hora em que o dia das tasks vira
         "solo_hunts": {},                 # nome (minusculas) -> caça solo; vazio = a melhor pro level (hunts.json)
     },
+    # blessings: compra as que faltam (a morte gasta as que amorteceu) ate 'keep' ativas, guardando 'reserve_gold'
+    "blessings": {"enabled": True, "keep": 7, "reserve_gold": 0},
     # pra onde o grupo vai quando o bot nao sabe a ultima caça (memory.json)
     "default_hunt": "",
     # conta parada na cidade por mais disso (sem o bot ter levado) -> o bot assume (vende e volta a caçar)

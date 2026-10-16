@@ -118,10 +118,13 @@ class Engine:
         self.credentials = None       # logins salvos (aba Login) pra relogar depois do server save
         self.targets = {}             # conta -> (caça do grupo dela, motivo) do ultimo plano
         self.refresh_hunts_every = 20 * 3600   # relê a lista de caças do jogo (caças novas) a cada 20h
-        self.blocked_hunts = {}       # caça -> ate quando nao tentar (o jogo nao deixou a party toda entrar)
+        # caça -> ate quando nao tentar (mortes repetidas / o jogo nao deixou a party toda entrar); salvo no memory.json
+        self.blocked_hunts = dict((self.memory.data.get("blocked_hunts") or {}))
         self.unknown_since = {}       # pagina -> desde quando esta em erro/tela desconhecida
         self.party_wait_since = None  # desde quando a party espera um membro voltar (erro/login)
-        self.deaths = {}              # (conta, caça) -> horarios das mortes recentes
+        # "conta|caça" -> horarios das mortes recentes (salvo no memory.json: sobrevive a reinicio)
+        self.deaths = dict(self.memory.data.get("deaths") or {})
+        self.bless_at = {}            # conta -> quando pode tentar comprar blessing de novo
         self.reload_at = {}           # pagina -> quando pode recarregar de novo
         self.current_hunt = {}        # conta -> caça do grupo (estabilidade: so' troca se outra atender mais tasks)
         self.login_busy = set()
@@ -162,12 +165,18 @@ class Engine:
         if not hunt:
             return
         now = time.time()
-        key = (acc.name, hunt.casefold())
+        key = f"{acc.name}|{hunt.casefold()}"
         recent = [t for t in self.deaths.get(key, []) if now - t < 3 * 3600] + [now]
         self.deaths[key] = recent
+        self.memory.data["deaths"] = {k: v for k, v in self.deaths.items() if any(now - t < 3 * 3600 for t in v)}
+        self.memory._save()
         if len(recent) >= 2 and now >= self.blocked_hunts.get(hunt, 0):
             self.blocked_hunts[hunt] = now + 12 * 3600
-            self.log(f"{acc.name} morreu {len(recent)}x em {hunt} em menos de 3h - caça BLOQUEADA por 12h, a party vai pra próxima")
+            self.memory.data["blocked_hunts"] = {h: t for h, t in self.blocked_hunts.items() if t > now}
+            self.memory._save()
+            fixed = (self.cfg["party"].get("hunt") or "").casefold() == hunt.casefold()
+            self.log(f"{acc.name} morreu {len(recent)}x em {hunt} em menos de 3h - caça BLOQUEADA por 12h"
+                     + (" (era a caça fixa da party: usando a automática enquanto isso)" if fixed else ", a party vai pra próxima"))
 
     def _recover_pages(self):
         """Servidor caiu / pagina travada: recarrega sozinho. Pagina de erro (Cloudflare 1033, 502, em branco) = recarrega
@@ -249,6 +258,13 @@ class Engine:
                 self._note_death(acc)
             self._safe(acc.name, acc.dismiss_gates, [acc])
             states[acc.name] = acc.read()
+        bless = self.cfg.get("blessings") or {}
+        if bless.get("enabled"):
+            for acc in [a for a in self.accounts if a.name in states and a.state.bless_alert
+                        and a.state.phase in ("hunting", "city", "training") and not a.state.modals]:
+                if time.time() >= self.bless_at.get(acc.name, 0):
+                    self.bless_at[acc.name] = time.time() + 600      # sem ouro / falhou: tenta de novo em 10 min
+                    self._safe(acc.name, lambda acc=acc: acc.buy_blessings(bless.get("keep", 7), bless.get("reserve_gold", 0)), [acc])
         for acc in [a for a in self.accounts if a.name in states and any(m.startswith("PROMOÇÃO") for m in a.state.modals)]:
             self._safe(acc.name, acc.dismiss_notices, [acc])
         states = {n: st for n, st in states.items() if st.phase not in ("offline", "error")}
@@ -850,7 +866,19 @@ class Engine:
         self._fix_party(group)
         if (self.tasks_on or self.party_first) and self.refresh_hunts_every and T.hunts_age() > self.refresh_hunts_every:
             self._refresh_hunts(group.leader)
-        group.leader.start_hunt(hunt)
+        try:
+            group.leader.start_hunt(hunt)
+        except GameError as error:
+            if "nao encontrada" not in str(error):
+                raise
+            # o jogo esconde caças que a conta ainda nao pode usar (quest/acesso): bloqueia 24h e o plano escolhe outra
+            self.blocked_hunts[hunt] = time.time() + 24 * 3600
+            self.memory.data["blocked_hunts"] = {h: t for h, t in self.blocked_hunts.items() if t > time.time()}
+            self.memory._save()
+            self.log(f"[{group.label}] a caça {hunt} não aparece na lista do jogo pra {group.leader.name} (sem acesso?) - "
+                     f"bloqueada 24h, vou pra próxima")
+            self.ours.update(group.names)
+            return
         if group.is_party:
             self._check_party_entered(group, hunt)
         self.ours.difference_update(group.names)

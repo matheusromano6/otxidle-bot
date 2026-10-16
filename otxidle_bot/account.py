@@ -38,6 +38,7 @@ READ_JS = r"""() => {
     tracker: [...document.querySelectorAll('section.ht-panel')].map(s => (s.getAttribute('aria-label') || '') + ' | ' + s.innerText).join(' || '),
     modals: modals, url: location.pathname,
     notes: vis(q('.un-modal')),
+    bless_alert: !!q('button.gs-tool.is-blessing-alert'),
     death: vis(q('.dm-modal')) ? (q('.dm-modal').innerText || '').slice(0, 400) : '',
   };
 }"""
@@ -74,6 +75,7 @@ class State:
     phase: str = "unknown"          # hunting / leaving / city / training / offline / login / site / error / unknown
     updating: bool = False          # tela de login avisando que o servidor esta atualizando (server save)
     notes: bool = False             # tela "NOVIDADES" aberta (precisa rolar e confirmar)
+    bless_alert: bool = False       # botao Blessings com alerta = falta blessing
     death: str = ""                 # texto da tela "VOCÊ MORREU" (vazio = nao morreu)
     hunt_name: str = ""
     cap_free: int = None
@@ -104,6 +106,7 @@ def build_state(raw, cap_max=None):
                party_size=parse_party(raw.get("party")), modals=list(raw.get("modals") or []))
     st.updating = bool(raw.get("updating"))
     st.notes = bool(raw.get("notes"))
+    st.bless_alert = bool(raw.get("bless_alert"))
     st.death = raw.get("death") or ""
     if raw.get("disconnected"):
         st.phase = "error"             # notificacao "DESCONECTADO" (WebSocket 1006): a tela fica congelada -> recarregar
@@ -269,7 +272,7 @@ class Account:
             button = self.page.locator(S.DEATH_OK)
             if not button.count():
                 button = self.page.locator(S.DEATH_MODAL + " button").filter(
-                    has_text=re.compile(r"CONTINUAR|FECHAR|OK|ENTENDI|VOLTAR", re.I))
+                    has_text=re.compile(r"CONTINUAR|FECHAR|OK|ENTENDI|VOLTAR|RENASCER|REVIVER|RESPAWN", re.I))
             if button.count():
                 self._click(button.first, timeout=3000)
             else:
@@ -289,6 +292,40 @@ class Account:
             self._click(confirm)
             time.sleep(0.8)
             self.log(f"{self.name}: leu e confirmou as NOVIDADES")
+
+    BLESS_JS = r"""() => [...document.querySelectorAll('.gm-modal .bl-card')].map(c => ({
+        name: (c.querySelector('.bl-name')?.textContent || '').trim(), cost: (c.querySelector('.bl-cost')?.textContent || '').trim(),
+        active: c.classList.contains('is-active') || !!c.querySelector('.bl-buy')?.disabled }))"""
+
+    def buy_blessings(self, keep=7, reserve=0):
+        """Abre Blessings e ativa as que faltam (mais baratas primeiro) ate 'keep' ativas, sem deixar o ouro abaixo de
+        'reserve'. Compra imediata, sem confirmacao. Retorna quantas comprou."""
+        self.close_modals()
+        self.page.locator(S.BLESS_BUTTON).first.dispatch_event("click")
+        self.page.locator(S.MODAL + " " + S.BLESS_CARD).first.wait_for(timeout=6000)
+        time.sleep(0.5)
+        bought = 0
+        try:
+            cards = self.page.evaluate(self.BLESS_JS)
+            active = sum(1 for c in cards if c["active"])
+            todo = sorted([c for c in cards if not c["active"]], key=lambda c: parse_int(c["cost"]) or 0)
+            for card in todo:
+                if active >= keep:
+                    break
+                gold = parse_int(self.page.evaluate("() => document.querySelector('.gs-goldrow .gold')?.innerText")) or 0
+                cost = parse_int(card["cost"]) or 0
+                if gold - cost < reserve:
+                    self.log(f"{self.name}: ouro insuficiente pra blessing {card['name']} (reserva {reserve:,})".replace(",", "."))
+                    break
+                self._click(self.page.locator(S.MODAL + " " + S.BLESS_CARD).filter(has_text=card["name"]).first.locator(S.BLESS_BUY))
+                time.sleep(0.8)
+                active += 1
+                bought += 1
+            if bought:
+                self.log(f"{self.name}: comprou {bought} blessing(s) - {active}/7 ativas")
+        finally:
+            self.close_modals()
+        return bought
 
     def claim_daily(self):
         """Quadro aberto: 'COLETAR DIÁRIO' habilitado -> coleta."""
@@ -354,6 +391,11 @@ class Account:
 
     def _open_play(self, tab):
         self.close_modals()
+        for _ in range(4):                        # outra janela aberta (ex.: Amigos) roubava o campo de busca
+            if not self.page.locator(S.MODAL).count():
+                break
+            self.page.keyboard.press("Escape")
+            time.sleep(0.5)
         self._click(self.page.locator(S.PLAY))
         tab_btn = self.page.locator(S.GM_TAB, has_text=tab).first
         tab_btn.wait_for(timeout=6000)
@@ -381,7 +423,7 @@ class Account:
         """JOGAR -> HUNTS: le TODAS as caças (nome, level recomendado/minimo). Criaturas: so' abre o detalhe das que nao
         estao em 'known' ({nome: criaturas}). Retorna a lista no formato do hunts.json. So' na cidade."""
         self._open_play("HUNTS")
-        search = self.page.locator(S.MODAL + " " + S.HUNT_SEARCH)
+        search = self.page.locator(S.PLAY_MODAL + " " + S.HUNT_SEARCH)
         if search.count():
             search.first.click()
             search.first.press("Control+a")
@@ -417,13 +459,18 @@ class Account:
     def _find_card(self, hunt):
         """Acha o card da caça: DIGITA no campo de busca da janela (o texto de dica mudou de "Buscar caças" pra
         "Caça ou criatura" numa atualizacao, e .fill() nao dispara o filtro); se nao achar, percorre as paginas."""
+        play = S.PLAY_MODAL                       # SO' a janela de caças (tem as abas HUNTS/TRAINING)
+        self.page.locator(play + " " + S.GM_CARD).first.wait_for(timeout=6000)
+        if not self.page.locator(play + " " + S.GM_CARD).count():
+            raise GameError("lista de caças não carregou")
+
         def match():
-            cards = self.page.locator(S.MODAL + " " + S.GM_CARD)
+            cards = self.page.locator(play + " " + S.GM_CARD)
             for i in range(cards.count()):
                 if cards.nth(i).inner_text().split("\n")[0].strip().casefold() == hunt.casefold():
                     return cards.nth(i)
             return None
-        search = self.page.locator(S.MODAL + " " + S.HUNT_SEARCH)
+        search = self.page.locator(play + " " + S.HUNT_SEARCH)
         if search.count():
             field = search.first
             field.click()
@@ -441,7 +488,7 @@ class Account:
             card = match()
             if card is not None:
                 return card
-            nxt = self.page.locator(S.MODAL + " button.gs-tool", has_text="›")
+            nxt = self.page.locator(play + " button.gs-tool", has_text="›")
             if not nxt.count() or nxt.first.is_disabled():
                 return None
             nxt.first.dispatch_event("click")

@@ -319,7 +319,10 @@ def plan_party_first(accounts, hunts, cfg, current=None, blocked=()):
         tcfg = cfg.get("tasks") or {}
         if not tcfg.get("enabled", True) or tcfg.get("priority", "xp") == "xp":
             # LEVEL primeiro (usuario): a caça mais forte que a party aguenta; tasks/Paw so' de carona
-            hunt = party.get("hunt") or strongest_hunt(hunts, max_rec, low, now, blocked)
+            fixed = party.get("hunt")
+            if fixed and fixed.casefold() in {x.casefold() for x in blocked}:
+                fixed = None                 # caça fixa bloqueada por mortes: usa a automatica enquanto durar o bloqueio
+            hunt = fixed or strongest_hunt(hunts, max_rec, low, now, blocked)
         else:
             # 'Caça da party' = caça PADRAO: so' quando nenhuma caça tem task das contas
             hunt = best_hunt(hunts, members, max_rec, low, now, fallback=party.get("hunt") or None)[0]

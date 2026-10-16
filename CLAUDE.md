@@ -333,3 +333,14 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   `training.party_mode` 'together' (padrao) | 'alone'. Together: memory `party_training` (sobrevive a reinicio/queda) ->
   todas as contas em modo party ficam no treino ate TODAS terem resume (600); ai encerram juntas e a party volta.
   A v2.2.0 quebrava a sincronia ao reiniciar o bot (a flag era por conta). resume voltou pra 600.
+
+## v2.9.x - blessings, bloqueio persistente e busca na janela certa (16/10/2026)
+- Blessings: `button.gs-tool[aria-label=Blessings]` (classe `is-blessing-alert` = falta alguma) -> `.gm-modal` com `.bl-badges`
+  ('ATIVAS: n/7', 'REDUÇÃO...', 'MORRER AGORA CUSTA x% · XP · OURO') e 7 `.bl-card` (`.bl-name`, `.bl-cost` 20k x5 / 26k x2,
+  `.bl-buy` ATIVAR; ativa = `.is-active` + botao 'Ativa' disabled). Compra IMEDIATA, sem confirmacao, ate caçando. Ajuda: cada
+  uma tira 8% da penalidade (7 = 56%) e do ouro perdido; a morte gasta as blessings. `blessings` {enabled, keep 7, reserve_gold}.
+- Bloqueio de caça (mortes) e historico de mortes agora no memory.json; caça FIXA da party bloqueada -> usa a automatica.
+  Asura Palace: 9 mortes em ~1h (16/10) -> bloqueada 12h.
+- BUG: a busca de caça digitava no 1o input de qualquer .gm-modal - com a janela Amigos ainda aberta digitava no 'Nome do
+  personagem' -> 'caça nao encontrada' -> bloqueou 17 caças em cascata. Agora usa `.gm-modal:has(button.gm-tab)` (PLAY_MODAL),
+  fecha as outras janelas antes e so bloqueia (24h) se a lista de caças carregou. Validado: party de 4 na Glooth Factory.

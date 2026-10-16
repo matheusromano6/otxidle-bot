@@ -33,6 +33,11 @@ DEATH_MODAL = ".dm-modal"                # "VOCÊ MORREU" (perdas, "Morto por X"
 DEATH_OK = ".dm-modal .dm-ok"
 TASK_CLAIM = ".tb-claim"                 # "COLETAR DIÁRIO" no quadro de tasks (habilita depois das tasks do dia)
 
+# --- blessings (barra de ferramentas): `.is-blessing-alert` = falta alguma. Compra IMEDIATA, sem confirmacao, ate caçando.
+BLESS_BUTTON = 'button.gs-tool[aria-label*="Blessings" i]'
+BLESS_CARD = ".bl-card"                  # .bl-name, .bl-cost "20,000", .bl-buy "ATIVAR" / "Ativa" (disabled) ; ativa = .is-active
+BLESS_BUY = ".bl-buy"
+
 # --- caçando
 HUNT_PANEL = "section.hb-panel"          # "Caçando / <nome> / Tempo de caça ..."
 HUNT_NAME = "section.hb-panel .gs-panelhead p"
@@ -52,6 +57,7 @@ SELL_TEXT = "VENDER"
 
 # --- modais (Mantine). Ha varios .mantine-Modal-root vazios sempre no DOM: usar o conteudo.
 MODAL = ".gm-modal"
+PLAY_MODAL = ".gm-modal:has(button.gm-tab)"   # a janela JOGAR/EXPLORAR (abas HUNTS/TRAINING...): nao confundir com Amigos
 DRAWER = ".gm-panel"                     # gaveta de detalhe da caça
 GM_TAB = "button.gm-tab"                 # HUNTS / TRAINING / ...
 GM_CARD = "button.gm-card"               # card de caça / treino ("Nome\nLEVEL ...")
