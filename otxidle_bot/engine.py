@@ -696,8 +696,6 @@ class Engine:
                 acc.use_exercise_weapon()
             if not self.memory.training(acc.name):
                 return
-            if self.party_first and not self._all_trained():
-                return                      # party: espera TODAS recuperarem pra voltar junto
             if training_done(st, self.cfg):
                 acc.end_training()
                 self.memory.set_training(acc.name, False)
@@ -738,9 +736,16 @@ class Engine:
             if trigger:
                 reason, detail, names = trigger
                 if reason == "stamina":
-                    # party primeiro: treinam TODAS juntas (e voltam juntas) pra nao quebrar a party
-                    for name in (group.names if self.party_first and group.is_party else names):
+                    # so' quem acabou a stamina vai treinar (usuario): os outros seguem caçando com a party.
+                    for name in names:
                         self.memory.set_training(name, True)
+                    tired = [a for a in group.members if a.name in names]
+                    if group.leader.name not in names and tired:
+                        for acc in tired:          # membro saindo sai SO' ele da party; o lider continua caçando
+                            self.log(f"[{group.label}] {acc.name}: {acc.state.stamina_hunt} min de stamina de caça - vai treinar, "
+                                     f"a party continua")
+                            acc.finish_hunt()
+                        return
                 self._leave(group, detail)
             return
         # lider fora da caça: quem esta caçando volta pra cidade (pra entrar na party/caça certa)

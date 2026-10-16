@@ -189,6 +189,7 @@ class FakeAccount:
 def make_cfg(tasks=False, **changes):
     cfg = copy.deepcopy(config.DEFAULTS)
     cfg["tasks"]["enabled"] = tasks
+    cfg["training"]["resume_stamina_minutes"] = 600          # os testes antigos usam 100 min como "stamina baixa"
     cfg.update(changes)
     return cfg
 
@@ -440,6 +441,16 @@ class EngineV1Test(unittest.TestCase):
         eng.tick()
         self.assertEqual(acc.state.phase, "training")                 # stamina cheia mas NAO encerra
         self.assertNotIn("end_training", acc.actions)
+
+    def test_tired_member_trains_alone_party_keeps_hunting(self):
+        w = World()
+        kina, sorc = FakeAccount(w, "Kina"), FakeAccount(w, "Sorc", stamina=10, vocation="Sorcerer")
+        w.parties["Kina"] = ["Sorc"]
+        eng = engine_for(w, make_cfg(party={"enabled": True, "leader": "kina", "members": ["sorc"], "hunt": "Troll Hills"}))
+        eng.tick()
+        self.assertEqual(sorc.actions, ["finish"])               # so' ele sai
+        self.assertNotIn("finish", kina.actions)                # a lider continua caçando
+        self.assertTrue(eng.memory.training("Sorc"))
 
     def test_invite_from_stranger_ignored(self):
         w = World()
