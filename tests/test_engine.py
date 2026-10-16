@@ -446,11 +446,35 @@ class EngineV1Test(unittest.TestCase):
         w = World()
         kina, sorc = FakeAccount(w, "Kina"), FakeAccount(w, "Sorc", stamina=10, vocation="Sorcerer")
         w.parties["Kina"] = ["Sorc"]
-        eng = engine_for(w, make_cfg(party={"enabled": True, "leader": "kina", "members": ["sorc"], "hunt": "Troll Hills"}))
+        cfg = make_cfg(party={"enabled": True, "leader": "kina", "members": ["sorc"], "hunt": "Troll Hills"})
+        cfg["training"]["party_mode"] = "alone"
+        eng = engine_for(w, cfg)
         eng.tick()
         self.assertEqual(sorc.actions, ["finish"])               # so' ele sai
         self.assertNotIn("finish", kina.actions)                # a lider continua caçando
         self.assertTrue(eng.memory.training("Sorc"))
+
+    def test_party_trains_together_until_all_recover(self):
+        w = World()
+        kina = FakeAccount(w, "Kina", stamina=500, vocation="Knight")
+        sorc = FakeAccount(w, "Sorc", stamina=10, vocation="Sorcerer")
+        w.parties["Kina"] = ["Sorc"]
+        cfg = make_cfg(party={"enabled": True, "leader": "kina", "members": ["sorc"], "hunt": "Troll Hills"})
+        eng = engine_for(w, cfg)
+        eng.tick()                                               # Sorc acabou: a party toda sai
+        self.assertIn("finish", kina.actions)
+        eng.tick()
+        self.assertEqual((kina.state.phase, sorc.state.phase), ("training", "training"))
+        kina.state.stamina_hunt = 650                            # Kina recuperou, Sorc ainda nao: ninguem sai
+        eng = Engine(w.accounts, cfg, log=lambda m: None, memory=eng.memory, hunts=HUNTS)   # bot reiniciado
+        eng.refresh_hunts_every = None
+        eng.tick()
+        self.assertNotIn("end_training", kina.actions)
+        sorc.state.stamina_hunt = 620                            # todas com 10h: saem juntas
+        eng.tick()
+        self.assertIn("end_training", kina.actions)
+        self.assertIn("end_training", sorc.actions)
+        self.assertFalse(eng.memory.party_training())
 
     def test_invite_from_stranger_ignored(self):
         w = World()

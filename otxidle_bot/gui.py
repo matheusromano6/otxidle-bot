@@ -25,6 +25,8 @@ BG, PANEL, PANEL_ALT, BORDER = "#101418", "#161c22", "#1d252d", "#2b3640"
 TEXT, MUTED, ACCENT, ACCENT_HOVER, DANGER, WARN = "#e6edf3", "#8b98a5", "#ff8c1a", "#e67a0f", "#f85149", "#d29922"
 PHASES = {"hunting": "caçando", "city": "cidade", "training": "treinando", "leaving": "saindo", "unknown": "?"}
 MAX_LOG_LINES = 500
+PARTY_TRAIN = {"together": "Todas juntas: uma acaba -> todas treinam até todas recuperarem",
+               "alone": "Só quem acabou treina; as outras seguem caçando"}
 MODES = {"party": "Party", "solo": "Solo", "train": "Só treinar"}
 PRIORITIES = {"xp": "XP: party na caça mais forte (tasks de carona)", "tasks": "Tasks: caça que atende mais tasks / Paw"}
 
@@ -329,10 +331,14 @@ class App:
         self.training_var = tk.BooleanVar(value=self.cfg["training"]["enabled"])
         ctk.CTkCheckBox(grid, text="Mandar o grupo treinar quando a stamina de caça acabar", variable=self.training_var,
                         fg_color=ACCENT, text_color=TEXT).grid(row=7, column=0, columnspan=3, sticky="w", pady=8)
+        ctk.CTkLabel(grid, text="Treino da party", text_color=TEXT).grid(row=9, column=0, sticky="w", pady=4)
+        self.party_train_mode = tk.StringVar(value=PARTY_TRAIN[self.cfg["training"].get("party_mode", "together")])
+        ctk.CTkOptionMenu(grid, values=list(PARTY_TRAIN.values()), variable=self.party_train_mode, width=420,
+                          fg_color=PANEL_ALT).grid(row=9, column=1, columnspan=2, sticky="w")
         ctk.CTkButton(grid, text="Salvar regras", command=self._save_rules, fg_color=ACCENT, hover_color=ACCENT_HOVER,
-                      text_color="#1a0d00").grid(row=8, column=0, sticky="w", pady=10)
+                      text_color="#1a0d00").grid(row=10, column=0, sticky="w", pady=10)
         self.rules_msg = ctk.CTkLabel(grid, text="", text_color=MUTED)
-        self.rules_msg.grid(row=8, column=1, columnspan=2, sticky="w")
+        self.rules_msg.grid(row=10, column=1, columnspan=2, sticky="w")
         ctk.CTkLabel(tab, text="Na venda o bot usa 'SELECIONAR TUDO' da venda rápida: vende tudo do inventário. "
                                "Itens no POUCH ficam protegidos - guarde lá o que não pode ser vendido.",
                      text_color=MUTED, wraplength=840, justify="left").pack(anchor="w", padx=14)
@@ -354,6 +360,7 @@ class App:
             else:
                 self.cfg[key][sub] = value
         self.cfg["training"]["enabled"] = bool(self.training_var.get())
+        self.cfg["training"]["party_mode"] = next(k for k, v in PARTY_TRAIN.items() if v == self.party_train_mode.get())
         self.cfg["default_hunt"] = self.default_hunt.get().strip()
         self.save()
         self.rules_msg.configure(text="Salvo.", text_color=ACCENT)

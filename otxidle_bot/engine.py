@@ -274,6 +274,19 @@ class Engine:
             # ao ligar o bot ele assume na hora (sem esperar 'cidade parada'): cada conta vai pro destino do modo
             self.first_tick = False
             self.ours.update(a.name for a in accounts)
+        party_names = [a for a in accounts if cfgmod.account_mode(self.cfg, a.name) == "party"]
+        if self.memory.party_training():
+            # treino da party: as contas da party ficam no treino ate TODAS recuperarem; ai saem juntas
+            if party_names and all(training_done(a.state, self.cfg) for a in party_names):
+                self.memory.set_party_training(False)
+                self.log("party: todas recuperaram a stamina de caça - voltam a caçar juntas")
+                for a in party_names:
+                    if self.memory.training(a.name) and a.state.phase == "training":
+                        self._safe(a.name, a.end_training, [a])
+                    self.memory.set_training(a.name, False)
+            else:
+                for a in party_names:
+                    self.memory.set_training(a.name, True)
         training = [a for a in accounts if self.memory.training(a.name) or cfgmod.account_mode(self.cfg, a.name) == "train"]
         playing = [a for a in accounts if a not in training]
         groups = self._groups(playing)
@@ -696,13 +709,16 @@ class Engine:
                 acc.use_exercise_weapon()
             if not self.memory.training(acc.name):
                 return
+            if self.memory.party_training() and cfgmod.account_mode(self.cfg, acc.name) == "party":
+                return                      # treino da party: sai junto com as outras (no tick)
             if training_done(st, self.cfg):
                 acc.end_training()
                 self.memory.set_training(acc.name, False)
                 self.log(f"{acc.name}: stamina de caça recuperada - volta a caçar")
             return
         if st.phase == "city":
-            if training_done(st, self.cfg):
+            if training_done(st, self.cfg) and not (self.memory.party_training()
+                                                    and cfgmod.account_mode(self.cfg, acc.name) == "party"):
                 self.memory.set_training(acc.name, False)
                 return
             if st.party_size:
@@ -735,8 +751,15 @@ class Engine:
             trigger = hunt_triggers([a.state for a in group.accounts], self.cfg, self.cap_floor)
             if trigger:
                 reason, detail, names = trigger
+                if reason == "stamina" and group.is_party and self.cfg["training"].get("party_mode", "together") == "together":
+                    # TODAS juntas (usuario): uma acabou -> a party inteira treina ate TODAS terem resume_stamina_minutes
+                    self.memory.set_party_training(True)
+                    for acc in group.accounts:
+                        self.memory.set_training(acc.name, True)
+                    self._leave(group, detail + " - a party toda vai treinar")
+                    return
                 if reason == "stamina":
-                    # so' quem acabou a stamina vai treinar (usuario): os outros seguem caçando com a party.
+                    # so' quem acabou a stamina vai treinar: os outros seguem caçando com a party.
                     for name in names:
                         self.memory.set_training(name, True)
                     tired = [a for a in group.members if a.name in names]

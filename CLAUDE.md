@@ -327,3 +327,9 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   sincronizado: a conta com <= stamina_minutes sai SOZINHA (membro: Finalizar Hunt so dele; lider: a party volta e e
   remontada) e as outras seguem caçando. Volta quando stamina >= resume (padrao agora 30 min, folga pra nao ir e voltar)
   e o bot remonta a party com ela. Validado 08:14: Sorc saiu do treino -> party de 4 na Asura Palace.
+
+## v2.8.0 - treino da party TODAS JUNTAS, persistente (16/10/2026, usuario)
+- Usuario voltou atras: 'sempre usar as 4; se um for treinar os outros vao tambem ate que todos tenham 10h; ai voltam todos'.
+  `training.party_mode` 'together' (padrao) | 'alone'. Together: memory `party_training` (sobrevive a reinicio/queda) ->
+  todas as contas em modo party ficam no treino ate TODAS terem resume (600); ai encerram juntas e a party volta.
+  A v2.2.0 quebrava a sincronia ao reiniciar o bot (a flag era por conta). resume voltou pra 600.

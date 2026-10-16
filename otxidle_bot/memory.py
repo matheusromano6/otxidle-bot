@@ -41,6 +41,15 @@ class Memory:
             self._save()
 
     # tasks do dia: {'day': 'AAAA-MM-DD', 'accounts': {nome: {done, creature, hunt, stuck, checked}}}
+    # treino da PARTY (todas juntas): sobrevive a reinicio do bot / queda do servidor
+    def party_training(self):
+        return bool(self.data.get("party_training"))
+
+    def set_party_training(self, value):
+        if bool(self.data.get("party_training")) != bool(value):
+            self.data["party_training"] = bool(value)
+            self._save()
+
     def tasks_today(self, day):
         tasks = self.data.get("tasks") or {}
         return dict(tasks.get("accounts") or {}) if tasks.get("day") == day else {}

@@ -19,7 +19,10 @@ DEFAULTS = {
     "training": {
         "enabled": True,
         "stamina_minutes": 15,
-        "resume_stamina_minutes": 30,      # volta a caçar com isso (folga acima de stamina_minutes evita ir e voltar)
+        "resume_stamina_minutes": 600,     # volta a caçar com isso (10h)
+        # party: "together" = uma acaba -> TODAS treinam e voltam juntas quando TODAS tiverem resume;
+        #        "alone" = so' quem acabou treina, as outras seguem caçando
+        "party_mode": "together",
         "by_name": {},                    # nome (minusculas) -> card do treino (Magic/Fist/Club/Sword/Axe/Distance)
         "use_exercise": True,             # liga a arma de exercicio (recompensa diaria) quando a conta tem uma
         "skills": {"knight": "Axe", "paladin": "Distance", "druid": "Magic", "sorcerer": "Magic"},
