@@ -344,3 +344,5 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
 - BUG: a busca de caça digitava no 1o input de qualquer .gm-modal - com a janela Amigos ainda aberta digitava no 'Nome do
   personagem' -> 'caça nao encontrada' -> bloqueou 17 caças em cascata. Agora usa `.gm-modal:has(button.gm-tab)` (PLAY_MODAL),
   fecha as outras janelas antes e so bloqueia (24h) se a lista de caças carregou. Validado: party de 4 na Glooth Factory.
+- v2.9.4 (usuario): 'se for selecionada a hunt esperada, seguir SEMPRE ela, mesmo morrendo'. Caça fixa da party (e solo) ignora
+  bloqueios; o bloqueio por 2 mortes so vale pra escolha Automatica. Party voltou pra Asura Palace 10:55.

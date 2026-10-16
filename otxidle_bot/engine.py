@@ -175,8 +175,9 @@ class Engine:
             self.memory.data["blocked_hunts"] = {h: t for h, t in self.blocked_hunts.items() if t > now}
             self.memory._save()
             fixed = (self.cfg["party"].get("hunt") or "").casefold() == hunt.casefold()
-            self.log(f"{acc.name} morreu {len(recent)}x em {hunt} em menos de 3h - caça BLOQUEADA por 12h"
-                     + (" (era a caça fixa da party: usando a automática enquanto isso)" if fixed else ", a party vai pra próxima"))
+            self.log(f"{acc.name} morreu {len(recent)}x em {hunt} em menos de 3h"
+                     + (" - é a caça escolhida da party, continua nela" if fixed
+                        else " - caça BLOQUEADA por 12h na escolha automática, a party vai pra próxima"))
 
     def _recover_pages(self):
         """Servidor caiu / pagina travada: recarrega sozinho. Pagina de erro (Cloudflare 1033, 502, em branco) = recarrega

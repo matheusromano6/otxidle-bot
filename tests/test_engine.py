@@ -630,11 +630,11 @@ class PartyFirstTest(unittest.TestCase):
         self.assertEqual(groups[("Sorc",)], ("Orc Camp", "solo"))                 # fora da party: a caça escolhida
         self.assertEqual(groups[("Kina", "Pally")][1], "party")
 
-    def test_fixed_party_hunt_is_skipped_when_blocked(self):
+    def test_fixed_party_hunt_always_followed(self):
         cfg = make_cfg(tasks=False, party={"enabled": True, "leader": "kina", "members": ["pally"], "hunt": "Tomb Floor II"})
         accs = [{"name": "Kina", "level": 26}, {"name": "Pally", "level": 20}]
         self.assertEqual(T.plan_party_first(accs, HUNTS + [TOMB], cfg)[0].hunt, "Tomb Floor II")
-        self.assertNotEqual(T.plan_party_first(accs, HUNTS + [TOMB], cfg, blocked=["Tomb Floor II"])[0].hunt, "Tomb Floor II")
+        self.assertEqual(T.plan_party_first(accs, HUNTS + [TOMB], cfg, blocked=["Tomb Floor II"])[0].hunt, "Tomb Floor II")  # fixa: sempre
 
     def test_member_outside_two_thirds_goes_solo_safe(self):
         hunts = HUNTS + [TOMB]
