@@ -72,7 +72,8 @@ def hunt_triggers(states, cfg, floors=None):
     floors = floors or {}
     for st in states:
         floor = floors.get(st.name.casefold(), 0)
-        if st.cap_pct is not None and st.cap_pct >= cfg["capacity_pct"] and st.cap_pct >= floor + FLOOR_MARGIN:
+        full = st.cap_pct is not None and st.cap_pct >= 99 and time.time() >= (cfg.get("_no_sale_until") or {}).get(st.name, 0)
+        if st.cap_pct is not None and st.cap_pct >= cfg["capacity_pct"] and (st.cap_pct >= floor + FLOOR_MARGIN or full):
             return "capacidade", f"{st.name} com {st.cap_pct:.0f}% da capacidade", [st.name]
     tr = cfg["training"]
     if tr["enabled"]:
@@ -812,8 +813,12 @@ class Engine:
             self._warn_once(("nohunt", group.label), f"[{group.label}] não sei pra qual caça ir: escolha a caçada padrão na interface")
             return
         for acc in group.accounts:
-            acc.sell_all()
+            gained = acc.sell_all()
             self._note_floor(acc)
+            if not gained and (acc.state.cap_pct or 0) >= 99:
+                # vendeu nada e continua cheia: nao fica saindo e voltando - tenta de novo em 10 min
+                self.cfg.setdefault("_no_sale_until", {})[acc.name] = time.time() + 600
+                self.log(f"{acc.name}: a venda não liberou espaço (mochila cheia) - tento de novo em 10 min")
         self._fix_party(group)
         if (self.tasks_on or self.party_first) and self.refresh_hunts_every and T.hunts_age() > self.refresh_hunts_every:
             self._refresh_hunts(group.leader)

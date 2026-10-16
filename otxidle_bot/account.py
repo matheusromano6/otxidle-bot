@@ -264,7 +264,16 @@ class Account:
                          + (" - sem blessings" if "blessings acabaram" in st.death else ""))
             else:
                 self.log(f"{self.name}: fechou o relatório da caça")
-            self._click(self.page.locator(S.DEATH_OK).first)
+            # morte ou RELATORIO da caça ('CAÇA ENCERRADA'): o botao mudou entre versoes do jogo -> qualquer botao de
+            # fechar da janela; sem nenhum, Escape (nunca esperar 30s por um botao que nao existe)
+            button = self.page.locator(S.DEATH_OK)
+            if not button.count():
+                button = self.page.locator(S.DEATH_MODAL + " button").filter(
+                    has_text=re.compile(r"CONTINUAR|FECHAR|OK|ENTENDI|VOLTAR", re.I))
+            if button.count():
+                self._click(button.first, timeout=3000)
+            else:
+                self.page.keyboard.press("Escape")
             time.sleep(1)
         if self.page.locator(S.NOTES_MODAL).count():
             notes = self.page.locator(S.NOTES_SCROLL)

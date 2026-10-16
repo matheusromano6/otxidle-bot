@@ -315,3 +315,9 @@ Huntera. Projeto NOVO e SEPARADO: nao misturar com `matheusromano6/huntera-bot` 
   status code: 1006' ou 'Cannot send data if the connection is not in the Connected State'. A tela de caça/treino fica CONGELADA
   (o bot achava que estava tudo certo). Agora vira fase 'error' -> recarrega a aba (Engine._recover_pages) e sai do plano
   ate voltar. Validado 20:54: Kina e Druid recarregados -> JOGAR AGORA.
+
+## v2.6.3 - Druid preso com mochila cheia (15/10/2026)
+- 22:03 a venda deu +0 (a janela nova 'CAÇA ENCERRADA' - relatorio ao Finalizar Hunt - estava aberta) e o piso virou 98% ->
+  'so sai com 108%' -> ficou 45 min caçando com CAP 0. Depois o fechar do relatorio esperava `.dm-ok` 30s (botao nao existe).
+  v2.6.3: mochila >= 99% sempre sai (piso nao trava; venda que nao libera nada espera 10 min); relatorio/morte fecha com
+  qualquer botao CONTINUAR/FECHAR/OK/ENTENDI ou Escape. Validado 22:51: Druid vendeu +20k e voltou.

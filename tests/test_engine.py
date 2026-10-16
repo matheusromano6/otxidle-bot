@@ -226,6 +226,11 @@ class TriggerTest(unittest.TestCase):
         st.cap_free = 200                                                          # 60%
         self.assertEqual(hunt_triggers([st], cfg, {"a": 47})[0], "capacidade")
 
+    def test_full_bag_always_leaves(self):
+        cfg = make_cfg(capacity_pct=95)
+        st = State(name="A", cap_free=0, cap_max=500, stamina_hunt=600)          # 100%
+        self.assertEqual(hunt_triggers([st], cfg, {"a": 98})[0], "capacidade")    # piso 98 nao trava a mochila cheia
+
     def test_training_done(self):
         cfg = make_cfg()
         self.assertFalse(training_done(State(stamina_hunt=100, stamina_train=300), cfg))
